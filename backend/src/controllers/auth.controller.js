@@ -24,14 +24,18 @@ export const signup = async (req, res) => {
     }
 
     const normalizedUsername = username.toLowerCase().trim();
-    const existingUsername = await User.findOne({ username: normalizedUsername });
+    const [existingUsername, existingEmail] = await Promise.all([
+      User.findOne({ username: normalizedUsername }),
+      User.findOne({ email })
+    ]);
+
     if (existingUsername) {
       return res.status(400).json({ message: "Username is already taken, try another username" });
     }
 
-    const user = await User.findOne({ email });
-
-    if (user) return res.status(400).json({ message: "Email already exists" });
+    if (existingEmail) {
+      return res.status(400).json({ message: "Email already exists" });
+    }
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
@@ -52,7 +56,11 @@ export const signup = async (req, res) => {
 
     if (newUser) {
       await newUser.save();
-      await sendOtpEmail(email, otp);
+      
+      // Send OTP in background so HTTP response is returned instantly
+      sendOtpEmail(email, otp).catch(err => {
+        console.error(`[BACKGROUND EMAIL ERROR] Failed to send OTP to ${email}:`, err);
+      });
 
       res.status(201).json({
         message: "Verification code sent to your email. Please verify to complete signup.",
@@ -212,7 +220,10 @@ export const resendOtp = async (req, res) => {
     user.verificationOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
     await user.save();
 
-    await sendOtpEmail(email, otp);
+    // Send OTP in background so HTTP response is returned instantly
+    sendOtpEmail(email, otp).catch(err => {
+      console.error(`[BACKGROUND EMAIL ERROR] Failed to resend OTP to ${email}:`, err);
+    });
 
     res.status(200).json({ message: "Verification code resent successfully" });
   } catch (error) {
