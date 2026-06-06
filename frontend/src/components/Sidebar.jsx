@@ -12,7 +12,6 @@ const Sidebar = () => {
   const [activeTab, setActiveTab] = useState("chats"); // "chats" | "find"
   const [searchQuery, setSearchQuery] = useState("");
 
-  const socket = useAuthStore((state) => state.socket);
   const {
     getRequests,
     pendingRequests,
@@ -22,21 +21,12 @@ const Sidebar = () => {
     acceptRequest,
     rejectRequest,
     cancelRequest,
-    subscribeToFriendEvents,
-    unsubscribeFromFriendEvents,
   } = useFriendStore();
 
   useEffect(() => {
     getUsers();
     getRequests();
   }, [getUsers, getRequests]);
-
-  useEffect(() => {
-    if (socket) {
-      subscribeToFriendEvents();
-      return () => unsubscribeFromFriendEvents();
-    }
-  }, [socket, subscribeToFriendEvents, unsubscribeFromFriendEvents]);
 
   const filteredUsers = showOnlineOnly
     ? users.filter((user) => onlineUsers.includes(user._id))
