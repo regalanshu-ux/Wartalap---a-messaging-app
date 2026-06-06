@@ -7,14 +7,14 @@ const NoChatSelected = () => {
         {/* Icon Container */}
         <div className="flex justify-center gap-4 mb-4">
           <div className="relative">
-            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center animate-bounce">
-              <MessageSquare className="w-8 h-8 text-primary" />
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center animate-bounce overflow-hidden border border-base-300">
+              <img src="/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
             </div>
           </div>
         </div>
 
         {/* Title & Description */}
-        <h2 className="text-2xl font-bold">Welcome to Wartalap!</h2>
+        <h2 className="text-2xl font-bold">Welcome to वार्तालाप!</h2>
         <p className="text-base-content/60">
           Select a conversation from the sidebar to start chatting with your friends in real-time.
         </p>
