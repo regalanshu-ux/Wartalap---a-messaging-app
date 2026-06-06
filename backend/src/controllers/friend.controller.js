@@ -12,11 +12,15 @@ export const searchUsers = async (req, res) => {
       return res.status(200).json([]);
     }
 
-    const regex = new RegExp(query.trim(), "i");
+    const cleanQuery = query.trim();
+    // Escape special characters to prevent regex injection, then anchor with ^ and $ for exact matching
+    const escapedQuery = cleanQuery.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const exactRegex = new RegExp(`^${escapedQuery}$`, "i");
+
     // Find matching users (excluding logged-in user)
     const matches = await User.find({
       _id: { $ne: loggedInUserId },
-      $or: [{ username: regex }, { email: regex }, { fullName: regex }],
+      $or: [{ username: exactRegex }, { email: exactRegex }, { fullName: exactRegex }],
     }).select("-password");
 
     const results = await Promise.all(
