@@ -43,7 +43,7 @@ console.log("------------------------------");
 if (isProduction) {
     app.use(express.static(staticPath));
 
-    app.get("*", (req, res) => {
+    app.get("*splat", (req, res) => {
         res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
     });
 }
