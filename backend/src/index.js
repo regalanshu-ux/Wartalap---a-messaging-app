@@ -8,6 +8,7 @@ import fs from "fs";
 import {connectDB} from "./lib/db.js";
 import authRoutes from "./routes/auth.route.js";
 import messageRoutes from "./routes/message.route.js";
+import friendRoutes from "./routes/friend.route.js";
 import { app, server } from "./lib/socket.js";
 
 dotenv.config()
@@ -26,6 +27,7 @@ app.use(cors({
 
 app.use("/api/auth", authRoutes);
 app.use("/api/message",messageRoutes);
+app.use("/api/friends", friendRoutes);
 
 const env = (process.env.NODE_ENV || "").trim();
 const isProduction = env === "production";

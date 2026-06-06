@@ -5,14 +5,28 @@ import cloudinary from "../lib/cloudnary.js";
 import { sendOtpEmail } from "../lib/email.js";
 
 export const signup = async (req, res) => {
-  const { fullName, email, password } = req.body;
+  const { fullName, username, email, password } = req.body;
   try {
-    if (!fullName || !email || !password) {
+    if (!fullName || !username || !email || !password) {
       return res.status(400).json({ message: "All Fields are required" });
+    }
+
+    if (username.length < 3) {
+      return res.status(400).json({ message: "Username must be at least 3 characters" });
+    }
+
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      return res.status(400).json({ message: "Username can only contain letters, numbers, and underscores" });
     }
 
     if (password.length < 6) {
       return res.status(400).json({ message: "Password must be at least 6 characters" });
+    }
+
+    const normalizedUsername = username.toLowerCase().trim();
+    const existingUsername = await User.findOne({ username: normalizedUsername });
+    if (existingUsername) {
+      return res.status(400).json({ message: "Username is already taken, try another username" });
     }
 
     const user = await User.findOne({ email });
@@ -28,6 +42,7 @@ export const signup = async (req, res) => {
 
     const newUser = new User({
       fullName,
+      username: normalizedUsername,
       email,
       password: hashedPassword,
       isVerified: false,
@@ -80,6 +95,7 @@ export const login = async (req, res) => {
     res.status(200).json({
       _id: user._id,
       fullName: user.fullName,
+      username: user.username,
       email: user.email,
       profilePic: user.profilePic,
     });
@@ -164,6 +180,7 @@ export const verifyOtp = async (req, res) => {
     res.status(200).json({
       _id: user._id,
       fullName: user.fullName,
+      username: user.username,
       email: user.email,
       profilePic: user.profilePic,
     });

@@ -1,15 +1,31 @@
 import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
+import FriendRequest from "../models/friendRequest.model.js";
 import cloudinary from "../lib/cloudnary.js";
 import { getReceiverSocketId, io } from "../lib/socket.js";
 
 export const getUserForSidebar = async(req,res) => {
     try{
         const loggedInUserId = req.user._id;
-        const filteredUsers = await User.find({_id: {$ne:loggedInUserId}}).select("-password");
+
+        // Find all accepted friend requests for loggedInUserId
+        const acceptedRequests = await FriendRequest.find({
+            status: "accepted",
+            $or: [
+                { senderId: loggedInUserId },
+                { receiverId: loggedInUserId }
+            ]
+        });
+
+        // Extract the friend's user ID from each accepted request
+        const friendIds = acceptedRequests.map(req => 
+            req.senderId.toString() === loggedInUserId.toString() ? req.receiverId : req.senderId
+        );
+
+        const filteredUsers = await User.find({ _id: { $in: friendIds } }).select("-password");
         res.status(200).json(filteredUsers);
     }catch(error){
-            console.error("Error in getUserForSidebar:");
+            console.error("Error in getUserForSidebar:", error);
             res.status(500).json({error:"Internal server error"});
     }
 };
