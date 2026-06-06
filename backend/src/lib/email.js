@@ -1,26 +1,40 @@
-import { Resend } from "resend";
-
-const resendApiKey = process.env.RESEND_API_KEY;
-const resend = resendApiKey ? new Resend(resendApiKey) : null;
+import nodemailer from "nodemailer";
 
 export const sendOtpEmail = async (email, otp) => {
-  const emailFrom = process.env.EMAIL_FROM || "Wartalap <onboarding@resend.dev>";
+  const smtpHost = process.env.SMTP_HOST;
+  const smtpPort = process.env.SMTP_PORT;
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+  const emailFrom = process.env.EMAIL_FROM || '"वार्तालाप Support" <no-reply@wartalap.com>';
 
-  if (!resend) {
+  const isSmtpConfigured = smtpHost && smtpPort && smtpUser && smtpPass;
+
+  if (!isSmtpConfigured) {
     console.log("\n==================================================");
     console.log("               OTP EMAIL VERIFICATION             ");
     console.log("==================================================");
     console.log(` To:      ${email}`);
     console.log(` Code:    ${otp}`);
     console.log("--------------------------------------------------");
-    console.log(" [Notice] Resend API key not detected in .env.");
-    console.log(" Set RESEND_API_KEY to send actual emails.");
+    console.log(" [Notice] SMTP configuration not detected in .env.");
+    console.log(" Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS");
+    console.log(" to send actual emails.");
     console.log("==================================================\n");
     return true;
   }
 
   try {
-    await resend.emails.send({
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: parseInt(smtpPort) || 587,
+      secure: smtpPort === "465",
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+    });
+
+    const mailOptions = {
       from: emailFrom,
       to: email,
       subject: `${otp} is your वार्तालाप verification code`,
@@ -37,7 +51,9 @@ export const sendOtpEmail = async (email, otp) => {
           <p style="font-size: 13px; color: #9ca3af; text-align: center; margin-top: 35px; border-top: 1px solid #f3f4f6; padding-top: 15px;">If you did not initiate this request, you can safely ignore this email.</p>
         </div>
       `,
-    });
+    };
+
+    await transporter.sendMail(mailOptions);
     console.log(`[EMAIL] OTP verification email sent successfully to: ${email}`);
     return true;
   } catch (error) {
@@ -48,7 +64,7 @@ export const sendOtpEmail = async (email, otp) => {
     console.log(` To:      ${email}`);
     console.log(` Code:    ${otp}`);
     console.log("--------------------------------------------------");
-    console.log(" [Notice] Resend delivery failed. Use the code above");
+    console.log(" [Notice] SMTP delivery failed. Use the code above");
     console.log(" to verify the account locally.");
     console.log("==================================================\n");
     return true;
@@ -56,23 +72,40 @@ export const sendOtpEmail = async (email, otp) => {
 };
 
 export const sendResetPasswordOtpEmail = async (email, otp) => {
-  const emailFrom = process.env.EMAIL_FROM || "Wartalap <onboarding@resend.dev>";
+  const smtpHost = process.env.SMTP_HOST;
+  const smtpPort = process.env.SMTP_PORT;
+  const smtpUser = process.env.SMTP_USER;
+  const smtpPass = process.env.SMTP_PASS;
+  const emailFrom = process.env.EMAIL_FROM || '"वार्तालाप Support" <no-reply@wartalap.com>';
 
-  if (!resend) {
+  const isSmtpConfigured = smtpHost && smtpPort && smtpUser && smtpPass;
+
+  if (!isSmtpConfigured) {
     console.log("\n==================================================");
     console.log("          PASSWORD RESET OTP (FALLBACK)           ");
     console.log("==================================================");
     console.log(` To:      ${email}`);
     console.log(` Code:    ${otp}`);
     console.log("--------------------------------------------------");
-    console.log(" [Notice] Resend API key not detected in .env.");
-    console.log(" Set RESEND_API_KEY to send actual emails.");
+    console.log(" [Notice] SMTP configuration not detected in .env.");
+    console.log(" Set SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS");
+    console.log(" to send actual emails.");
     console.log("==================================================\n");
     return true;
   }
 
   try {
-    await resend.emails.send({
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: parseInt(smtpPort) || 587,
+      secure: smtpPort === "465",
+      auth: {
+        user: smtpUser,
+        pass: smtpPass,
+      },
+    });
+
+    const mailOptions = {
       from: emailFrom,
       to: email,
       subject: `${otp} is your वार्तालाप password reset code`,
@@ -89,7 +122,9 @@ export const sendResetPasswordOtpEmail = async (email, otp) => {
           <p style="font-size: 13px; color: #9ca3af; text-align: center; margin-top: 35px; border-top: 1px solid #f3f4f6; padding-top: 15px;">If you did not request this, you can safely ignore this email and your password will remain unchanged.</p>
         </div>
       `,
-    });
+    };
+
+    await transporter.sendMail(mailOptions);
     console.log(`[EMAIL] Password reset email sent successfully to: ${email}`);
     return true;
   } catch (error) {
@@ -100,7 +135,7 @@ export const sendResetPasswordOtpEmail = async (email, otp) => {
     console.log(` To:      ${email}`);
     console.log(` Code:    ${otp}`);
     console.log("--------------------------------------------------");
-    console.log(" [Notice] Resend delivery failed. Use the code above");
+    console.log(" [Notice] SMTP delivery failed. Use the code above");
     console.log(" to reset the password locally.");
     console.log("==================================================\n");
     return true;
