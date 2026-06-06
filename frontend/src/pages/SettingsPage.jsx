@@ -4,36 +4,6 @@ import { Send } from "lucide-react";
 const THEMES = [
   "light",
   "dark",
-  "cupcake",
-  "bumblebee",
-  "emerald",
-  "corporate",
-  "synthwave",
-  "retro",
-  "cyberpunk",
-  "valentine",
-  "halloween",
-  "garden",
-  "forest",
-  "aqua",
-  "lofi",
-  "pastel",
-  "fantasy",
-  "wireframe",
-  "black",
-  "luxury",
-  "dracula",
-  "cmyk",
-  "autumn",
-  "business",
-  "acid",
-  "lemonade",
-  "night",
-  "coffee",
-  "winter",
-  "dim",
-  "nord",
-  "sunset",
 ];
 
 const SettingsPage = () => {
@@ -54,7 +24,7 @@ const SettingsPage = () => {
         </div>
 
         {/* Theme List Grid */}
-        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+        <div className="grid grid-cols-2 max-w-xs gap-3">
           {THEMES.map((t) => (
             <button
               key={t}
