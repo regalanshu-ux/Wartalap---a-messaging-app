@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import path from "path";
+import fs from "fs";
 
 import {connectDB} from "./lib/db.js";
 import authRoutes from "./routes/auth.route.js";
@@ -26,8 +27,21 @@ app.use(cors({
 app.use("/api/auth", authRoutes);
 app.use("/api/message",messageRoutes);
 
-if (process.env.NODE_ENV === "production") {
-    app.use(express.static(path.join(__dirname, "frontend/dist")));
+const env = (process.env.NODE_ENV || "").trim();
+const isProduction = env === "production";
+
+console.log("--- Deployment Diagnostics ---");
+console.log("NODE_ENV value:", process.env.NODE_ENV);
+console.log("Trimmed NODE_ENV:", env);
+console.log("Is Production Mode:", isProduction);
+
+const staticPath = path.join(__dirname, "frontend/dist");
+console.log("Expected Static Path:", staticPath);
+console.log("Static Path Exists:", fs.existsSync(staticPath));
+console.log("------------------------------");
+
+if (isProduction) {
+    app.use(express.static(staticPath));
 
     app.get("*", (req, res) => {
         res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
