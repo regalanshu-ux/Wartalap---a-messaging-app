@@ -14,6 +14,8 @@ export const useAuthStore = create((set, get) => ({
   onlineUsers: [],
   socket: null,
   signupEmail: localStorage.getItem("signup-email") || null,
+  isRequestingReset: false,
+  isResettingPassword: false,
 
   setSignupEmail: (email) => {
     if (email) {
@@ -106,6 +108,34 @@ export const useAuthStore = create((set, get) => ({
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to resend code");
       return false;
+    }
+  },
+
+  forgotPassword: async (email) => {
+    set({ isRequestingReset: true });
+    try {
+      const res = await axiosInstance.post("/auth/forgot-password", { email });
+      toast.success(res.data.message || "Reset code sent to your email!");
+      return true;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to send reset code");
+      return false;
+    } finally {
+      set({ isRequestingReset: false });
+    }
+  },
+
+  resetPassword: async (email, otp, newPassword) => {
+    set({ isResettingPassword: true });
+    try {
+      const res = await axiosInstance.post("/auth/reset-password", { email, otp, newPassword });
+      toast.success(res.data.message || "Password reset successfully!");
+      return true;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Failed to reset password");
+      return false;
+    } finally {
+      set({ isResettingPassword: false });
     }
   },
 

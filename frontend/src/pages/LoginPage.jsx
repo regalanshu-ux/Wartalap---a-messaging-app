@@ -74,9 +74,14 @@ const LoginPage = () => {
             </div>
 
             <div className="form-control">
-              <label className="label">
-                <span className="label-text font-medium">Password</span>
-              </label>
+              <div className="flex justify-between items-center">
+                <label className="label">
+                  <span className="label-text font-medium">Password</span>
+                </label>
+                <Link to="/forgot-password" className="text-xs link link-primary">
+                  Forgot Password?
+                </Link>
+              </div>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Lock className="size-5 text-base-content/40" />

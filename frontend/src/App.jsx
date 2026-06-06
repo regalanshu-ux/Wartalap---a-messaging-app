@@ -5,6 +5,7 @@ import LoginPage from "./pages/LoginPage";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import VerifyOtpPage from "./pages/VerifyOtpPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 
 import { useAuthStore } from "./store/useAuthStore";
 import { useThemeStore } from "./store/useThemeStore";
@@ -44,6 +45,7 @@ const App = () => {
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/profile" element={authUser ? <ProfilePage /> : <Navigate to="/login" />} />
           <Route path="/verify-otp" element={!authUser ? <VerifyOtpPage /> : <Navigate to="/" />} />
+          <Route path="/forgot-password" element={!authUser ? <ForgotPasswordPage /> : <Navigate to="/" />} />
         </Routes>
       </div>
 

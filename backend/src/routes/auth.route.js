@@ -1,5 +1,5 @@
 import express from "express";
-import { login, logout, signup, updateProfile, checkAuth, verifyOtp, resendOtp } from "../controllers/auth.controller.js";
+import { login, logout, signup, updateProfile, checkAuth, verifyOtp, resendOtp, forgotPassword, resetPassword } from "../controllers/auth.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
@@ -15,5 +15,8 @@ router.get("/check", protectRoute, checkAuth);
 
 router.post("/verify-otp", verifyOtp);
 router.post("/resend-otp", resendOtp);
+
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
 
 export default router;
