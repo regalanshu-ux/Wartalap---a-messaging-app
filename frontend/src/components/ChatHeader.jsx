@@ -1,4 +1,4 @@
-import { X, Phone, Video } from "lucide-react";
+import { X, Phone, Video, ArrowLeft } from "lucide-react";
 import { useChatStore } from "../store/useChatStore";
 import { useAuthStore } from "../store/useAuthStore";
 import { useCallStore } from "../store/useCallStore";
@@ -53,13 +53,14 @@ const ChatHeader = () => {
             <Video className="size-4.5" />
           </button>
 
-          {/* Close button */}
+          {/* Back/Close button */}
           <button
             onClick={() => setSelectedUser(null)}
             className="btn btn-ghost btn-sm btn-circle text-base-content/75 hover:text-error transition-all"
-            title="Close Chat"
+            title="Back to Chats"
           >
-            <X className="size-4.5" />
+            <ArrowLeft className="size-4.5 lg:hidden" />
+            <X className="size-4.5 hidden lg:block" />
           </button>
         </div>
       </div>

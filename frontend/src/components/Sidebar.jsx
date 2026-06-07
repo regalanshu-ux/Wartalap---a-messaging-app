@@ -20,15 +20,15 @@ const Sidebar = () => {
   if (isUsersLoading) return <SidebarSkeleton />;
 
   return (
-    <aside className="h-full w-20 lg:w-72 border-r border-base-content/10 flex flex-col transition-all duration-300">
+    <aside className="h-full w-full lg:w-72 border-r border-base-content/10 flex flex-col transition-all duration-300">
       <div className="border-b border-base-content/10 p-5 w-full bg-base-200/10">
         <div className="flex items-center gap-2.5">
           <Users className="size-5 text-primary" />
-          <span className="font-bold text-sm tracking-wide hidden lg:block uppercase opacity-80">Contacts</span>
+          <span className="font-bold text-sm tracking-wide uppercase opacity-80">Contacts</span>
         </div>
 
         {/* Online filter toggle */}
-        <div className="mt-3.5 hidden lg:flex items-center gap-2">
+        <div className="mt-3.5 flex items-center gap-2">
           <label className="cursor-pointer flex items-center gap-2 text-xs select-none">
             <input
               type="checkbox"
@@ -49,7 +49,7 @@ const Sidebar = () => {
           <div className="text-center text-base-content/50 py-12 px-4 space-y-2">
             <Users className="size-8 mx-auto text-base-content/30" />
             <p className="text-sm font-semibold">No connections yet</p>
-            <p className="text-xs text-base-content/40 max-w-[200px] mx-auto hidden lg:block leading-relaxed">
+            <p className="text-xs text-base-content/40 max-w-[200px] mx-auto block leading-relaxed">
               Use "Find Friends" in the top navbar to search and connect with other users!
             </p>
           </div>
@@ -80,13 +80,10 @@ const Sidebar = () => {
                   {isOnline && (
                     <span className="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full ring-2 ring-base-100 animate-pulse shadow-md" />
                   )}
-                  {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 size-3 bg-primary rounded-full ring-2 ring-base-100 animate-pulse lg:hidden shadow-md" />
-                  )}
                 </div>
 
-                {/* User Info - visible on larger viewports */}
-                <div className="hidden lg:block min-w-0 flex-1">
+                {/* User Info - visible on all viewports */}
+                <div className="min-w-0 flex-1">
                   <div className="font-semibold text-sm truncate">{user.fullName}</div>
                   <div className={`text-xs truncate font-medium mt-0.5 ${
                     isOnline ? "text-green-500" : "text-base-content/50"
@@ -97,7 +94,7 @@ const Sidebar = () => {
 
                 {/* Unread Message Badge */}
                 {unreadCount > 0 && (
-                  <div className="size-5 rounded-full bg-primary text-primary-content text-[10px] font-bold flex items-center justify-center animate-pulse shadow-md shadow-primary/20 shrink-0 hidden lg:flex">
+                  <div className="size-5 rounded-full bg-primary text-primary-content text-[10px] font-bold flex items-center justify-center animate-pulse shadow-md shadow-primary/20 shrink-0 flex">
                     {unreadCount}
                   </div>
                 )}
