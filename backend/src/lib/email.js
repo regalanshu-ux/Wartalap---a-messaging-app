@@ -1,15 +1,39 @@
 import nodemailer from "nodemailer";
 
-export const sendOtpEmail = async (email, otp) => {
+let transporter = null;
+
+const getTransporter = () => {
+  if (transporter) return transporter;
+
   const smtpHost = process.env.SMTP_HOST;
   const smtpPort = process.env.SMTP_PORT;
   const smtpUser = process.env.SMTP_USER;
   const smtpPass = process.env.SMTP_PASS;
-  const emailFrom = process.env.EMAIL_FROM || '"वार्तालाप Support" <no-reply@wartalap.com>';
 
   const isSmtpConfigured = smtpHost && smtpPort && smtpUser && smtpPass;
 
   if (!isSmtpConfigured) {
+    return null;
+  }
+
+  transporter = nodemailer.createTransport({
+    host: smtpHost,
+    port: parseInt(smtpPort) || 587,
+    secure: smtpPort === "465",
+    auth: {
+      user: smtpUser,
+      pass: smtpPass,
+    },
+  });
+
+  return transporter;
+};
+
+export const sendOtpEmail = async (email, otp) => {
+  const activeTransporter = getTransporter();
+  const emailFrom = process.env.EMAIL_FROM || '"वार्तालाप Support" <no-reply@wartalap.com>';
+
+  if (!activeTransporter) {
     console.log("\n==================================================");
     console.log("               OTP EMAIL VERIFICATION             ");
     console.log("==================================================");
@@ -24,16 +48,6 @@ export const sendOtpEmail = async (email, otp) => {
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: parseInt(smtpPort) || 587,
-      secure: smtpPort === "465",
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
-    });
-
     const mailOptions = {
       from: emailFrom,
       to: email,
@@ -53,34 +67,20 @@ export const sendOtpEmail = async (email, otp) => {
       `,
     };
 
-    await transporter.sendMail(mailOptions);
+    await activeTransporter.sendMail(mailOptions);
     console.log(`[EMAIL] OTP verification email sent successfully to: ${email}`);
     return true;
   } catch (error) {
     console.error(`[EMAIL ERROR] Failed to send OTP to ${email}:`, error.message);
-    console.log("\n==================================================");
-    console.log("            OTP VERIFICATION CODE (FALLBACK)       ");
-    console.log("==================================================");
-    console.log(` To:      ${email}`);
-    console.log(` Code:    ${otp}`);
-    console.log("--------------------------------------------------");
-    console.log(" [Notice] SMTP delivery failed. Use the code above");
-    console.log(" to verify the account locally.");
-    console.log("==================================================\n");
-    return true;
+    throw new Error(`Failed to send verification email: ${error.message}`);
   }
 };
 
 export const sendResetPasswordOtpEmail = async (email, otp) => {
-  const smtpHost = process.env.SMTP_HOST;
-  const smtpPort = process.env.SMTP_PORT;
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
+  const activeTransporter = getTransporter();
   const emailFrom = process.env.EMAIL_FROM || '"वार्तालाप Support" <no-reply@wartalap.com>';
 
-  const isSmtpConfigured = smtpHost && smtpPort && smtpUser && smtpPass;
-
-  if (!isSmtpConfigured) {
+  if (!activeTransporter) {
     console.log("\n==================================================");
     console.log("          PASSWORD RESET OTP (FALLBACK)           ");
     console.log("==================================================");
@@ -95,16 +95,6 @@ export const sendResetPasswordOtpEmail = async (email, otp) => {
   }
 
   try {
-    const transporter = nodemailer.createTransport({
-      host: smtpHost,
-      port: parseInt(smtpPort) || 587,
-      secure: smtpPort === "465",
-      auth: {
-        user: smtpUser,
-        pass: smtpPass,
-      },
-    });
-
     const mailOptions = {
       from: emailFrom,
       to: email,
@@ -124,20 +114,12 @@ export const sendResetPasswordOtpEmail = async (email, otp) => {
       `,
     };
 
-    await transporter.sendMail(mailOptions);
+    await activeTransporter.sendMail(mailOptions);
     console.log(`[EMAIL] Password reset email sent successfully to: ${email}`);
     return true;
   } catch (error) {
     console.error(`[EMAIL ERROR] Failed to send password reset OTP to ${email}:`, error.message);
-    console.log("\n==================================================");
-    console.log("          PASSWORD RESET OTP (FALLBACK)           ");
-    console.log("==================================================");
-    console.log(` To:      ${email}`);
-    console.log(` Code:    ${otp}`);
-    console.log("--------------------------------------------------");
-    console.log(" [Notice] SMTP delivery failed. Use the code above");
-    console.log(" to reset the password locally.");
-    console.log("==================================================\n");
-    return true;
+    throw new Error(`Failed to send password reset email: ${error.message}`);
   }
 };
+

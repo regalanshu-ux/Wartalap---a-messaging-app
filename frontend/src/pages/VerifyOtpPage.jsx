@@ -85,23 +85,25 @@ const VerifyOtpPage = () => {
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center bg-base-200/50 p-4">
-      <div className="w-full max-w-md bg-base-100 rounded-2xl shadow-xl border border-base-300 p-8 space-y-6">
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center ambient-bg p-4 relative overflow-hidden">
+      <div className="w-full max-w-md glass-card rounded-3xl p-8 border border-white/20 dark:border-zinc-800/30 shadow-2xl space-y-6 z-10">
         {/* LOGO & TITLE */}
         <div className="text-center space-y-2">
-          <div className="mx-auto size-12 rounded-xl bg-primary/10 flex items-center justify-center">
-            <KeyRound className="size-6 text-primary animate-pulse" />
+          <div className="mx-auto size-14 rounded-2xl bg-primary/15 flex items-center justify-center animate-pulse">
+            <KeyRound className="size-7 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold">Verify Your Email</h1>
+          <h1 className="text-3xl font-extrabold bg-gradient-to-r from-primary via-indigo-500 to-secondary bg-clip-text text-transparent">
+            Verify Your Email
+          </h1>
           <p className="text-sm text-base-content/60">
             We&apos;ve sent a 6-digit verification code to
           </p>
-          <p className="font-semibold text-primary break-all">{signupEmail}</p>
+          <p className="font-bold text-primary break-all text-sm tracking-wide bg-primary/10 py-1.5 px-3 rounded-xl inline-block">{signupEmail}</p>
         </div>
 
         {/* OTP INPUTS */}
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="flex justify-between gap-2" onPaste={handlePaste}>
+          <div className="flex justify-between gap-2.5" onPaste={handlePaste}>
             {otp.map((digit, index) => (
               <input
                 key={index}
@@ -111,14 +113,14 @@ const VerifyOtpPage = () => {
                 value={digit}
                 onChange={(e) => handleChange(index, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(index, e)}
-                className="size-12 sm:size-14 text-center text-2xl font-bold bg-base-200 border border-base-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+                className="size-11 sm:size-14 text-center text-2xl font-bold bg-base-200/50 border border-base-content/10 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent focus:bg-base-100 transition-all shadow-inner"
               />
             ))}
           </div>
 
           <button
             type="submit"
-            className="btn btn-primary w-full h-12 text-base font-semibold"
+            className="btn btn-primary w-full h-12 rounded-xl text-base font-semibold shadow-lg shadow-primary/20 btn-tactile"
             disabled={isVerifying || otp.some((d) => !d)}
           >
             {isVerifying ? (
@@ -141,7 +143,7 @@ const VerifyOtpPage = () => {
           ) : (
             <button
               onClick={handleResend}
-              className="text-sm font-semibold text-primary hover:underline"
+              className="text-sm font-bold text-primary hover:underline hover:text-primary-focus transition-all"
             >
               Resend Code
             </button>
@@ -149,10 +151,10 @@ const VerifyOtpPage = () => {
         </div>
 
         {/* BACK BUTTON */}
-        <div className="text-center pt-2">
+        <div className="text-center pt-2 border-t border-base-content/10">
           <button
             onClick={() => navigate("/signup")}
-            className="inline-flex items-center gap-2 text-sm text-base-content/50 hover:text-base-content transition-colors"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-base-content/50 hover:text-base-content transition-colors"
           >
             <ArrowLeft className="size-4" />
             Back to Signup

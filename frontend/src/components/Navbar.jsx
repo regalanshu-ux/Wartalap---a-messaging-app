@@ -57,33 +57,37 @@ const Navbar = () => {
 
   return (
     <header
-      className="bg-base-100 border-b border-base-300 fixed w-full top-0 z-40
-    backdrop-blur-lg bg-base-100/80"
+      className="backdrop-blur-md bg-base-100/75 border-b border-base-content/10 fixed w-full top-0 z-40 shadow-sm transition-all duration-300"
     >
       <div className="container mx-auto px-4 h-16">
         <div className="flex items-center justify-between h-full">
           <div className="flex items-center gap-8">
-            <Link to="/" className="flex items-center gap-2.5 hover:opacity-80 transition-all">
-              <img src="/logo.jpg" alt="Logo" className="size-9 object-cover rounded-lg border border-base-300" />
-              <h1 className="text-lg font-bold">वार्तालाप</h1>
+            <Link to="/" className="flex items-center gap-2.5 hover:opacity-90 active:scale-95 transition-all">
+              <div className="relative overflow-hidden rounded-xl size-9 border border-base-content/15 flex items-center justify-center">
+                <img src="/logo.jpg" alt="Logo" className="w-full h-full object-cover" />
+              </div>
+              <h1 className="text-xl font-extrabold tracking-tight bg-gradient-to-r from-primary via-indigo-500 to-secondary bg-clip-text text-transparent">
+                वार्तालाप
+              </h1>
             </Link>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
             <Link
               to={"/settings"}
-              className={`
-              btn btn-sm gap-2 transition-colors
-              `}
+              className="btn btn-sm h-9 px-3 rounded-lg border border-base-content/10 bg-base-200/50 hover:bg-base-200 hover:border-base-content/20 btn-tactile gap-2 font-medium"
             >
-              <Settings className="w-4 h-4" />
+              <Settings className="w-4 h-4 text-base-content/75" />
               <span className="hidden sm:inline">Settings</span>
             </Link>
 
             {authUser && (
               <>
-                <Link to={"/"} className="btn btn-sm gap-2">
-                  <Home className="size-4" />
+                <Link
+                  to={"/"}
+                  className="btn btn-sm h-9 px-3 rounded-lg border border-base-content/10 bg-base-200/50 hover:bg-base-200 hover:border-base-content/20 btn-tactile gap-2 font-medium"
+                >
+                  <Home className="size-4 text-base-content/75" />
                   <span className="hidden sm:inline">Chats</span>
                 </Link>
 
@@ -94,8 +98,10 @@ const Navbar = () => {
                       setIsFindOpen(!isFindOpen);
                       setIsRequestsOpen(false);
                     }}
-                    className={`btn btn-sm gap-2 transition-all ${
-                      isFindOpen ? "btn-active bg-base-200" : ""
+                    className={`btn btn-sm h-9 px-3 rounded-lg border btn-tactile gap-2 font-medium transition-all ${
+                      isFindOpen
+                        ? "bg-primary text-primary-content border-primary shadow-lg shadow-primary/20"
+                        : "border-base-content/10 bg-base-200/50 hover:bg-base-200 hover:border-base-content/20"
                     }`}
                   >
                     <Search className="size-4" />
@@ -103,12 +109,12 @@ const Navbar = () => {
                   </button>
 
                   {isFindOpen && (
-                    <div className="absolute right-0 mt-2 w-80 bg-base-100 border border-base-300 rounded-xl shadow-xl z-50 overflow-hidden">
-                      <div className="p-3.5 border-b border-base-300 bg-base-200/50">
-                        <h3 className="font-semibold text-sm">Find Friends</h3>
+                    <div className="absolute right-0 mt-2.5 w-80 glass-card rounded-2xl shadow-2xl z-50 overflow-hidden animate-fade-in-up border border-base-content/15">
+                      <div className="p-4 border-b border-base-content/10 bg-base-200/40">
+                        <h3 className="font-bold text-sm tracking-wide bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Find Friends</h3>
                       </div>
 
-                      <div className="p-3.5">
+                      <div className="p-4 space-y-3">
                         <div className="relative">
                           <input
                             type="text"
@@ -118,49 +124,49 @@ const Navbar = () => {
                               setSearchQuery(e.target.value);
                               searchUsers(e.target.value);
                             }}
-                            className="input input-bordered w-full pl-9 h-10 text-sm focus:outline-none focus:ring-1 focus:ring-primary bg-base-200/50"
+                            className="input input-bordered w-full pl-9 h-10 text-sm focus:outline-none focus:ring-1 focus:ring-primary bg-base-200/50 rounded-xl border-base-content/10"
                             autoFocus
                           />
                           <Search className="size-4 absolute left-3 top-3 text-base-content/40" />
                         </div>
 
-                        <div className="mt-4 max-h-60 overflow-y-auto">
+                        <div className="max-h-60 overflow-y-auto pr-1">
                           {searchQuery.trim() === "" ? (
-                            <div className="py-6 text-center text-xs text-base-content/50">
+                            <div className="py-8 text-center text-xs text-base-content/50">
                               Type the exact username or email to search.
                             </div>
                           ) : isSearching ? (
-                            <div className="py-6 text-center">
+                            <div className="py-8 text-center">
                               <span className="loading loading-spinner loading-sm text-primary"></span>
                             </div>
                           ) : searchResults.length === 0 ? (
-                            <div className="py-6 text-center text-xs text-base-content/50">
+                            <div className="py-8 text-center text-xs text-base-content/50">
                               No users found
                             </div>
                           ) : (
-                            <div className="space-y-3">
+                            <div className="space-y-2.5">
                               {searchResults.map((user) => (
                                 <div
                                   key={user._id}
-                                  className="flex items-center justify-between gap-2 p-1.5 rounded-lg hover:bg-base-200/40 transition-colors"
+                                  className="flex items-center justify-between gap-2 p-2 rounded-xl hover:bg-base-200/50 transition-all duration-200"
                                 >
                                   <div className="flex items-center gap-2.5 min-w-0">
                                     <img
                                       src={user.profilePic || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(user.fullName)}`}
                                       alt={user.fullName}
-                                      className="size-8 object-cover rounded-full border border-base-300"
+                                      className="size-9 object-cover rounded-full border border-base-content/10"
                                     />
                                     <div className="text-left min-w-0">
-                                      <div className="text-xs font-semibold truncate">{user.fullName}</div>
+                                      <div className="text-xs font-bold truncate">{user.fullName}</div>
                                       <div className="text-[10px] text-base-content/60 truncate">@{user.username}</div>
                                     </div>
                                   </div>
 
-                                  <div>
+                                  <div className="shrink-0">
                                     {user.relationship === "none" && (
                                       <button
                                         onClick={() => sendRequest(user._id)}
-                                        className="btn btn-xs btn-primary gap-1"
+                                        className="btn btn-xs btn-primary gap-1 rounded-lg font-bold px-2.5 h-7 shadow shadow-primary/10 btn-tactile"
                                       >
                                         <UserPlus className="size-3" />
                                         Add
@@ -169,32 +175,32 @@ const Navbar = () => {
                                     {user.relationship === "sent" && (
                                       <button
                                         onClick={() => cancelRequest(user._id)}
-                                        className="btn btn-xs btn-outline btn-secondary gap-1"
+                                        className="btn btn-xs btn-outline btn-secondary gap-1 rounded-lg font-bold px-2.5 h-7 btn-tactile"
                                       >
                                         <Clock className="size-3" />
                                         Cancel
                                       </button>
                                     )}
                                     {user.relationship === "received" && (
-                                      <div className="flex items-center gap-1">
+                                      <div className="flex items-center gap-1.5">
                                         <button
                                           onClick={() => acceptRequest(user._id)}
-                                          className="btn btn-xs btn-success btn-square size-6"
+                                          className="btn btn-xs btn-success btn-square size-7 flex items-center justify-center rounded-lg shadow shadow-success/15 btn-tactile text-success-content"
                                           title="Accept"
                                         >
-                                          <Check className="size-3" />
+                                          <Check className="size-3.5" />
                                         </button>
                                         <button
                                           onClick={() => rejectRequest(user._id)}
-                                          className="btn btn-xs btn-error btn-square size-6"
+                                          className="btn btn-xs btn-error btn-square size-7 flex items-center justify-center rounded-lg shadow shadow-error/15 btn-tactile text-error-content"
                                           title="Decline"
                                         >
-                                          <X className="size-3" />
+                                          <X className="size-3.5" />
                                         </button>
                                       </div>
                                     )}
                                     {user.relationship === "accepted" && (
-                                      <span className="text-[10px] font-semibold text-success flex items-center gap-1">
+                                      <span className="text-[10px] font-bold text-success flex items-center gap-1 bg-success/10 py-1 px-2.5 rounded-lg">
                                         <UserCheck className="size-3" />
                                         Friends
                                       </span>
@@ -217,59 +223,61 @@ const Navbar = () => {
                       setIsRequestsOpen(!isRequestsOpen);
                       setIsFindOpen(false);
                     }}
-                    className={`btn btn-sm gap-2 transition-all relative ${
-                      isRequestsOpen ? "btn-active bg-base-200" : ""
+                    className={`btn btn-sm h-9 px-3 rounded-lg border btn-tactile gap-2 font-medium transition-all relative ${
+                      isRequestsOpen
+                        ? "bg-primary text-primary-content border-primary shadow-lg shadow-primary/20"
+                        : "border-base-content/10 bg-base-200/50 hover:bg-base-200 hover:border-base-content/20"
                     }`}
                   >
                     <UserPlus className="size-4" />
                     <span className="hidden sm:inline">Requests</span>
                     {pendingRequests.incoming.length > 0 && (
-                      <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-content animate-bounce shadow-md">
+                      <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-secondary text-[10px] font-extrabold text-secondary-content shadow-lg animate-pulse">
                         {pendingRequests.incoming.length}
                       </span>
                     )}
                   </button>
 
                   {isRequestsOpen && (
-                    <div className="absolute right-0 mt-2 w-80 bg-base-100 border border-base-300 rounded-xl shadow-xl z-50 overflow-hidden">
-                      <div className="p-3.5 border-b border-base-300 bg-base-200/50 flex justify-between items-center">
-                        <h3 className="font-semibold text-sm">Friend Requests</h3>
-                        <span className="text-xs bg-base-300 px-2.5 py-0.5 rounded-full font-medium">
+                    <div className="absolute right-0 mt-2.5 w-80 glass-card rounded-2xl shadow-2xl z-50 overflow-hidden animate-fade-in-up border border-base-content/15">
+                      <div className="p-4 border-b border-base-content/10 bg-base-200/40 flex justify-between items-center">
+                        <h3 className="font-bold text-sm tracking-wide bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">Friend Requests</h3>
+                        <span className="text-[10px] font-bold bg-base-content/10 text-base-content px-2.5 py-1 rounded-full uppercase tracking-wider">
                           {pendingRequests.incoming.length} Pending
                         </span>
                       </div>
 
-                      <div className="max-h-72 overflow-y-auto divide-y divide-base-200">
+                      <div className="max-h-72 overflow-y-auto divide-y divide-base-content/5 pr-1">
                         {pendingRequests.incoming.length === 0 ? (
-                          <div className="p-6 text-center text-sm text-base-content/50">
+                          <div className="p-8 text-center text-sm text-base-content/50">
                             <UserPlus className="size-8 mx-auto mb-2 text-base-content/30" />
-                            <p>No pending friend requests</p>
+                            <p className="font-semibold">No pending friend requests</p>
                           </div>
                         ) : (
                           pendingRequests.incoming.map((request) => (
-                            <div key={request._id} className="p-3 flex items-center justify-between gap-3 hover:bg-base-200/30 transition-colors">
+                            <div key={request._id} className="p-3.5 flex items-center justify-between gap-3 hover:bg-base-200/35 transition-colors">
                               <div className="flex items-center gap-2.5 min-w-0">
                                 <img
                                   src={request.senderId.profilePic || `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(request.senderId.fullName)}`}
                                   alt={request.senderId.fullName}
-                                  className="size-9 object-cover rounded-full border border-base-300"
+                                  className="size-9 object-cover rounded-full border border-base-content/10"
                                 />
                                 <div className="text-left min-w-0">
-                                  <div className="text-xs font-semibold truncate">{request.senderId.fullName}</div>
+                                  <div className="text-xs font-bold truncate">{request.senderId.fullName}</div>
                                   <div className="text-[10px] text-base-content/60 truncate">@{request.senderId.username}</div>
                                 </div>
                               </div>
                               <div className="flex items-center gap-1.5 shrink-0">
                                 <button
                                   onClick={() => acceptRequest(request.senderId._id)}
-                                  className="btn btn-xs btn-success btn-square size-6 flex items-center justify-center rounded-md hover:scale-105 transition-transform"
+                                  className="btn btn-xs btn-success btn-square size-7 flex items-center justify-center rounded-lg shadow shadow-success/15 btn-tactile text-success-content"
                                   title="Accept"
                                 >
                                   <Check className="size-3.5" />
                                 </button>
                                 <button
                                   onClick={() => rejectRequest(request.senderId._id)}
-                                  className="btn btn-xs btn-error btn-square size-6 flex items-center justify-center rounded-md hover:scale-105 transition-transform"
+                                  className="btn btn-xs btn-error btn-square size-7 flex items-center justify-center rounded-lg shadow shadow-error/15 btn-tactile text-error-content"
                                   title="Decline"
                                 >
                                   <X className="size-3.5" />
@@ -283,12 +291,18 @@ const Navbar = () => {
                   )}
                 </div>
 
-                <Link to={"/profile"} className="btn btn-sm gap-2">
-                  <User className="size-4" />
+                <Link
+                  to={"/profile"}
+                  className="btn btn-sm h-9 px-3 rounded-lg border border-base-content/10 bg-base-200/50 hover:bg-base-200 hover:border-base-content/20 btn-tactile gap-2 font-medium"
+                >
+                  <User className="size-4 text-base-content/75" />
                   <span className="hidden sm:inline">Profile</span>
                 </Link>
 
-                <button className="btn btn-sm gap-2" onClick={logout}>
+                <button
+                  className="btn btn-sm h-9 px-3 rounded-lg border border-red-500/10 hover:border-red-500/30 bg-red-500/5 text-red-500 hover:bg-red-500/10 btn-tactile gap-2 font-medium"
+                  onClick={logout}
+                >
                   <LogOut className="size-4" />
                   <span className="hidden sm:inline">Logout</span>
                 </button>

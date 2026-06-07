@@ -55,13 +55,16 @@ export const signup = async (req, res) => {
     });
 
     if (newUser) {
+      // Send OTP first to ensure email sending works before saving/completing signup
+      try {
+        await sendOtpEmail(email, otp);
+      } catch (err) {
+        console.error(`[EMAIL ERROR] Failed to send OTP to ${email}:`, err);
+        return res.status(500).json({ message: "Failed to send verification email. Please check your email or try again later." });
+      }
+
       await newUser.save();
       
-      // Send OTP in background so HTTP response is returned instantly
-      sendOtpEmail(email, otp).catch(err => {
-        console.error(`[BACKGROUND EMAIL ERROR] Failed to send OTP to ${email}:`, err);
-      });
-
       res.status(201).json({
         message: "Verification code sent to your email. Please verify to complete signup.",
         email: newUser.email,
@@ -216,14 +219,18 @@ export const resendOtp = async (req, res) => {
 
     // Generate new 6-digit random numeric OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Send OTP first to ensure it succeeds before saving changes
+    try {
+      await sendOtpEmail(email, otp);
+    } catch (err) {
+      console.error(`[EMAIL ERROR] Failed to resend OTP to ${email}:`, err);
+      return res.status(500).json({ message: "Failed to resend verification email. Please try again." });
+    }
+
     user.verificationOtp = otp;
     user.verificationOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
     await user.save();
-
-    // Send OTP in background so HTTP response is returned instantly
-    sendOtpEmail(email, otp).catch(err => {
-      console.error(`[BACKGROUND EMAIL ERROR] Failed to resend OTP to ${email}:`, err);
-    });
 
     res.status(200).json({ message: "Verification code resent successfully" });
   } catch (error) {
@@ -246,14 +253,18 @@ export const forgotPassword = async (req, res) => {
 
     // Generate 6-digit random numeric OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Send reset OTP first to ensure it succeeds before saving changes
+    try {
+      await sendResetPasswordOtpEmail(email, otp);
+    } catch (err) {
+      console.error(`[EMAIL ERROR] Failed to send password reset OTP to ${email}:`, err);
+      return res.status(500).json({ message: "Failed to send password reset code. Please try again." });
+    }
+
     user.resetPasswordOtp = otp;
     user.resetPasswordOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
     await user.save();
-
-    // Send reset OTP in background
-    sendResetPasswordOtpEmail(email, otp).catch(err => {
-      console.error(`[BACKGROUND EMAIL ERROR] Failed to send password reset OTP to ${email}:`, err);
-    });
 
     res.status(200).json({ message: "Password reset code sent to your email." });
   } catch (error) {
