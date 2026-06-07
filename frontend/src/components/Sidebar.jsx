@@ -5,7 +5,7 @@ import SidebarSkeleton from "./skeletons/SidebarSkeleton";
 import { Users } from "lucide-react";
 
 const Sidebar = () => {
-  const { getUsers, users, selectedUser, setSelectedUser, isUsersLoading } = useChatStore();
+  const { getUsers, users, selectedUser, setSelectedUser, isUsersLoading, unreadMessages } = useChatStore();
   const { onlineUsers } = useAuthStore();
   const [showOnlineOnly, setShowOnlineOnly] = useState(false);
 
@@ -57,6 +57,8 @@ const Sidebar = () => {
           filteredUsers.map((user) => {
             const isOnline = onlineUsers.includes(user._id);
             const isSelected = selectedUser?._id === user._id;
+            const unreads = unreadMessages[user._id] || [];
+            const unreadCount = unreads.length;
 
             return (
               <button
@@ -78,6 +80,9 @@ const Sidebar = () => {
                   {isOnline && (
                     <span className="absolute bottom-0 right-0 size-3 bg-green-500 rounded-full ring-2 ring-base-100 animate-pulse shadow-md" />
                   )}
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 size-3 bg-primary rounded-full ring-2 ring-base-100 animate-pulse lg:hidden shadow-md" />
+                  )}
                 </div>
 
                 {/* User Info - visible on larger viewports */}
@@ -89,6 +94,13 @@ const Sidebar = () => {
                     {isOnline ? "Online" : "Offline"}
                   </div>
                 </div>
+
+                {/* Unread Message Badge */}
+                {unreadCount > 0 && (
+                  <div className="size-5 rounded-full bg-primary text-primary-content text-[10px] font-bold flex items-center justify-center animate-pulse shadow-md shadow-primary/20 shrink-0 hidden lg:flex">
+                    {unreadCount}
+                  </div>
+                )}
               </button>
             );
           })

@@ -9,6 +9,7 @@ export const useChatStore = create((set, get) => ({
   selectedUser: null,
   isUsersLoading: false,
   isMessagesLoading: false,
+  unreadMessages: {}, // key: senderId, value: message list
 
   getUsers: async () => {
     set({ isUsersLoading: true });
@@ -45,27 +46,53 @@ export const useChatStore = create((set, get) => ({
     }
   },
 
-  subscribeToMessages: () => {
-    const { selectedUser } = get();
-    if (!selectedUser) return;
-
-    const socket = useAuthStore.getState().socket;
-    if (!socket) return;
-
-    socket.on("newMessage", (newMessage) => {
-      // Check if message belongs to the current chat
-      if (newMessage.senderId !== selectedUser._id) return;
-      set({
-        messages: [...get().messages, newMessage],
-      });
+  addUnreadMessage: (message) => {
+    const { unreadMessages } = get();
+    const senderId = message.senderId;
+    const currentList = unreadMessages[senderId] || [];
+    set({
+      unreadMessages: {
+        ...unreadMessages,
+        [senderId]: [...currentList, message],
+      },
     });
   },
 
-  unsubscribeFromMessages: () => {
-    const socket = useAuthStore.getState().socket;
-    if (!socket) return;
-    socket.off("newMessage");
+  clearUnreadMessages: (userId) => {
+    const { unreadMessages } = get();
+    if (!unreadMessages[userId]) return;
+    const newUnread = { ...unreadMessages };
+    delete newUnread[userId];
+    set({ unreadMessages: newUnread });
   },
 
-  setSelectedUser: (selectedUser) => set({ selectedUser }),
+  initMessageListener: (socket) => {
+    if (!socket) return;
+    socket.off("newMessage");
+    socket.on("newMessage", (newMessage) => {
+      const { selectedUser } = get();
+      if (selectedUser && selectedUser._id === newMessage.senderId && !document.hidden) {
+        set({
+          messages: [...get().messages, newMessage],
+        });
+      } else {
+        get().addUnreadMessage(newMessage);
+      }
+    });
+  },
+
+  subscribeToMessages: () => {
+    // Handled globally via initMessageListener
+  },
+
+  unsubscribeFromMessages: () => {
+    // Handled globally
+  },
+
+  setSelectedUser: (selectedUser) => {
+    set({ selectedUser });
+    if (selectedUser) {
+      get().clearUnreadMessages(selectedUser._id);
+    }
+  },
 }));

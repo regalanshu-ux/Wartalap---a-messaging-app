@@ -43,6 +43,7 @@ const App = () => {
   const { authUser, socket, checkAuth, isCheckingAuth } = useAuthStore();
   const { theme } = useThemeStore();
   const { initCallListeners } = useCallStore();
+  const { initMessageListener } = useChatStore();
 
   useEffect(() => {
     checkAuth();
@@ -51,8 +52,9 @@ const App = () => {
   useEffect(() => {
     if (socket) {
       initCallListeners(socket);
+      initMessageListener(socket);
     }
-  }, [socket, initCallListeners]);
+  }, [socket, initCallListeners, initMessageListener]);
 
   // Request notification permission when user is authenticated
   useEffect(() => {
@@ -119,6 +121,10 @@ const App = () => {
     const clearNotificationDot = () => {
       if (document.title.startsWith("🔴 ")) {
         document.title = document.title.replace("🔴 ", "");
+      }
+      const { selectedUser } = useChatStore.getState();
+      if (selectedUser) {
+        useChatStore.getState().clearUnreadMessages(selectedUser._id);
       }
     };
 
