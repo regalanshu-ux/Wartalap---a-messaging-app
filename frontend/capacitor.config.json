@@ -1,0 +1,6 @@
+{
+  "appId": "com.wartalap.app",
+  "appName": "Wartalap",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}
