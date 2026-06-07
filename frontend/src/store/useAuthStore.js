@@ -3,10 +3,20 @@ import { axiosInstance } from "../lib/axios.js";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
-const BACKEND_URL = "http://192.168.1.40:5001";
-const BASE_URL = typeof window !== "undefined" && window.Capacitor
-  ? BACKEND_URL
-  : (import.meta.env.MODE === "development" ? "http://localhost:5001" : "/");
+const getBackendBaseUrl = () => {
+  if (typeof window !== "undefined" && window.Capacitor) {
+    return "http://192.168.1.40:5001";
+  }
+  if (typeof window !== "undefined" && window.location) {
+    const hostname = window.location.hostname;
+    if (import.meta.env.MODE === "development" || hostname === "localhost" || hostname.startsWith("192.168.")) {
+      return `http://${hostname}:5001`;
+    }
+  }
+  return "/";
+};
+
+const BASE_URL = getBackendBaseUrl();
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,

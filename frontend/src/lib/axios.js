@@ -1,10 +1,19 @@
 import axios from "axios";
 
-const BACKEND_URL = "http://192.168.1.40:5001";
+const getBackendUrl = () => {
+  if (typeof window !== "undefined" && window.Capacitor) {
+    return "http://192.168.1.40:5001/api";
+  }
+  if (typeof window !== "undefined" && window.location) {
+    const hostname = window.location.hostname;
+    if (import.meta.env.MODE === "development" || hostname === "localhost" || hostname.startsWith("192.168.")) {
+      return `http://${hostname}:5001/api`;
+    }
+  }
+  return "/api";
+};
 
 export const axiosInstance = axios.create({
-    baseURL: typeof window !== "undefined" && window.Capacitor
-      ? `${BACKEND_URL}/api`
-      : (import.meta.env.MODE === "development" ? "http://localhost:5001/api" : "/api"),
+    baseURL: getBackendUrl(),
     withCredentials: true,
 });
