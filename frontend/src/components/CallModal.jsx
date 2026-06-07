@@ -21,6 +21,7 @@ const CallModal = () => {
 
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
+  const remoteAudioRef = useRef(null);
   const ringtoneInterval = useRef(null);
   const audioCtx = useRef(null);
 
@@ -111,6 +112,13 @@ const CallModal = () => {
       remoteVideoRef.current.srcObject = remoteStream;
     }
   }, [remoteStream, callState]);
+
+  // Bind remote stream to audio element for voice-only call
+  useEffect(() => {
+    if (remoteAudioRef.current && remoteStream && callType === "voice") {
+      remoteAudioRef.current.srcObject = remoteStream;
+    }
+  }, [remoteStream, callState, callType]);
 
   if (callState === "idle") return null;
 
@@ -235,6 +243,7 @@ const CallModal = () => {
           ) : (
             // Voice Call Rendering
             <div className="flex-1 flex flex-col items-center justify-center gap-12 bg-gradient-to-b from-zinc-900 to-zinc-950 p-6 relative">
+              <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(59,130,246,0.08)_0%,transparent_60%)]" />
               
               <div className="flex flex-col sm:flex-row items-center gap-8 sm:gap-16 z-10">
