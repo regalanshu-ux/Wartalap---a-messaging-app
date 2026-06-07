@@ -43,7 +43,7 @@ const ChatContainer = () => {
 
   if (isMessagesLoading) {
     return (
-      <div className="flex-1 flex flex-col overflow-auto">
+      <div className="flex-1 flex flex-col overflow-hidden">
         <ChatHeader />
         <MessageSkeleton />
         <MessageInput />
@@ -52,7 +52,7 @@ const ChatContainer = () => {
   }
 
   return (
-    <div className="flex-1 flex flex-col overflow-auto bg-base-100/30">
+    <div className="flex-1 flex flex-col overflow-hidden bg-base-100/30">
       <ChatHeader />
 
       {/* Auto-delete policy banner */}
