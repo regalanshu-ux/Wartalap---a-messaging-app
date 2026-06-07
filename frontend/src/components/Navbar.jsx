@@ -2,10 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useAuthStore } from "../store/useAuthStore";
 import { useFriendStore } from "../store/useFriendStore";
-import { LogOut, Settings, User, Home, UserPlus, Check, X, Search, Clock, UserCheck } from "lucide-react";
+import { useThemeStore } from "../store/useThemeStore";
+import { LogOut, User, Home, UserPlus, Check, X, Search, Clock, UserCheck, Sun, Moon } from "lucide-react";
 
 const Navbar = () => {
   const { logout, authUser, socket } = useAuthStore();
+  const { theme, setTheme } = useThemeStore();
   const {
     pendingRequests,
     getRequests,
@@ -73,13 +75,18 @@ const Navbar = () => {
           </div>
 
           <div className="flex items-center gap-2.5">
-            <Link
-              to={"/settings"}
-              className="btn btn-sm h-9 px-3 rounded-lg border border-base-content/10 bg-base-200/50 hover:bg-base-200 hover:border-base-content/20 btn-tactile gap-2 font-medium"
+            {/* Theme Toggle Button */}
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="btn btn-sm h-9 w-9 p-0 rounded-lg border border-base-content/10 bg-base-200/50 hover:bg-base-200 hover:border-base-content/20 btn-tactile flex items-center justify-center cursor-pointer"
+              title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
             >
-              <Settings className="w-4 h-4 text-base-content/75" />
-              <span className="hidden sm:inline">Settings</span>
-            </Link>
+              {theme === "dark" ? (
+                <Sun className="size-4.5 text-yellow-500 animate-pulse" />
+              ) : (
+                <Moon className="size-4.5 text-indigo-500" />
+              )}
+            </button>
 
             {authUser && (
               <>
