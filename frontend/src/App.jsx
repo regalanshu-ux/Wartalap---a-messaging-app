@@ -5,9 +5,11 @@ import LoginPage from "./pages/LoginPage";
 import ProfilePage from "./pages/ProfilePage";
 import VerifyOtpPage from "./pages/VerifyOtpPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import CallModal from "./components/CallModal";
 
 import { useAuthStore } from "./store/useAuthStore";
 import { useThemeStore } from "./store/useThemeStore";
+import { useCallStore } from "./store/useCallStore";
 import { useEffect } from "react";
 
 import { Loader } from "lucide-react";
@@ -15,12 +17,19 @@ import { Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "react-hot-toast";
 
 const App = () => {
-  const { authUser, checkAuth, isCheckingAuth } = useAuthStore();
+  const { authUser, socket, checkAuth, isCheckingAuth } = useAuthStore();
   const { theme } = useThemeStore();
+  const { initCallListeners } = useCallStore();
 
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
+
+  useEffect(() => {
+    if (socket) {
+      initCallListeners(socket);
+    }
+  }, [socket, initCallListeners]);
 
   console.log({ authUser });
 
@@ -47,6 +56,7 @@ const App = () => {
         </Routes>
       </div>
 
+      <CallModal />
       <Toaster position="top-center" reverseOrder={false} />
     </div>
   );
