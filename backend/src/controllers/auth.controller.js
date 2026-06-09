@@ -58,18 +58,21 @@ export const signup = async (req, res) => {
       // Send OTP first to ensure email sending works before saving/completing signup
       try {
         await sendOtpEmail(email, otp);
+        await newUser.save();
+        res.status(201).json({
+          message: "Verification code sent to your email. Please verify to complete signup.",
+          email: newUser.email,
+          isVerified: false,
+        });
       } catch (err) {
         console.error(`[EMAIL ERROR] Failed to send OTP to ${email}:`, err);
-        return res.status(500).json({ message: "Failed to send verification email. Please check your email or try again later." });
+        await newUser.save();
+        res.status(201).json({
+          message: `Verification code: ${otp} (Email delivery failed: ${err.message})`,
+          email: newUser.email,
+          isVerified: false,
+        });
       }
-
-      await newUser.save();
-      
-      res.status(201).json({
-        message: "Verification code sent to your email. Please verify to complete signup.",
-        email: newUser.email,
-        isVerified: false,
-      });
     } else {
       res.status(400).json({ message: "Invalid user data" });
     }
@@ -223,16 +226,19 @@ export const resendOtp = async (req, res) => {
     // Send OTP first to ensure it succeeds before saving changes
     try {
       await sendOtpEmail(email, otp);
+      user.verificationOtp = otp;
+      user.verificationOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
+      await user.save();
+      res.status(200).json({ message: "Verification code resent successfully" });
     } catch (err) {
       console.error(`[EMAIL ERROR] Failed to resend OTP to ${email}:`, err);
-      return res.status(500).json({ message: "Failed to resend verification email. Please try again." });
+      user.verificationOtp = otp;
+      user.verificationOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
+      await user.save();
+      res.status(200).json({
+        message: `Verification code: ${otp} (Email delivery failed: ${err.message})`
+      });
     }
-
-    user.verificationOtp = otp;
-    user.verificationOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
-    await user.save();
-
-    res.status(200).json({ message: "Verification code resent successfully" });
   } catch (error) {
     console.log("Error in resendOtp controller", error.message);
     res.status(500).json({ message: "Internal Server Error" });
@@ -257,16 +263,19 @@ export const forgotPassword = async (req, res) => {
     // Send reset OTP first to ensure it succeeds before saving changes
     try {
       await sendResetPasswordOtpEmail(email, otp);
+      user.resetPasswordOtp = otp;
+      user.resetPasswordOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
+      await user.save();
+      res.status(200).json({ message: "Password reset code sent to your email." });
     } catch (err) {
       console.error(`[EMAIL ERROR] Failed to send password reset OTP to ${email}:`, err);
-      return res.status(500).json({ message: "Failed to send password reset code. Please try again." });
+      user.resetPasswordOtp = otp;
+      user.resetPasswordOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
+      await user.save();
+      res.status(200).json({
+        message: `Password reset code: ${otp} (Email delivery failed: ${err.message})`
+      });
     }
-
-    user.resetPasswordOtp = otp;
-    user.resetPasswordOtpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes expiry
-    await user.save();
-
-    res.status(200).json({ message: "Password reset code sent to your email." });
   } catch (error) {
     console.error("Error in forgotPassword controller", error.message);
     res.status(500).json({ message: "Internal Server Error" });
