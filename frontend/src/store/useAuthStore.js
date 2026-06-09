@@ -4,22 +4,27 @@ import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
 const getBackendBaseUrl = () => {
-  if (typeof window !== "undefined" && window.Capacitor) {
-    if (import.meta.env.MODE === "production") {
-      return "https://wartalap.onrender.com";
+  if (typeof window !== "undefined") {
+    if (window.Capacitor) {
+      if (import.meta.env.MODE === "production") {
+        return "https://wartalap.onrender.com";
+      }
+      return "http://192.168.1.40:5001";
     }
-    return "http://192.168.1.40:5001";
-  }
-  if (typeof window !== "undefined" && window.location) {
     const hostname = window.location.hostname;
-    if (import.meta.env.MODE === "development" || hostname === "localhost" || hostname.startsWith("192.168.")) {
+    const isLocalhost = hostname === "localhost" || hostname.startsWith("127.0.") || hostname.startsWith("192.168.");
+    if (import.meta.env.MODE === "production") {
+      if (isLocalhost && (window.location.protocol === "http:" || window.location.protocol === "file:")) {
+        return "https://wartalap.onrender.com";
+      }
+      return "/";
+    }
+    if (isLocalhost) {
       return `http://${hostname}:5001`;
     }
   }
   return "/";
 };
-
-const BASE_URL = getBackendBaseUrl();
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
@@ -185,7 +190,8 @@ export const useAuthStore = create((set, get) => ({
     const { authUser, socket } = get();
     if (!authUser || (socket && socket.connected)) return;
 
-    const newSocket = io(BASE_URL, {
+    const baseUrl = getBackendBaseUrl();
+    const newSocket = io(baseUrl, {
       query: {
         userId: authUser._id,
       },

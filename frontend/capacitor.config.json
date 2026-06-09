@@ -2,5 +2,10 @@
   "appId": "com.wartalap.app",
   "appName": "Wartalap",
   "webDir": "dist",
-  "bundledWebRuntime": false
+  "bundledWebRuntime": false,
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
 }
