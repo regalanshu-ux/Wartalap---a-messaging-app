@@ -11,7 +11,13 @@ const io = new Server(server, {
           if (process.env.NODE_ENV !== "production") {
             callback(null, true);
           } else {
-            const allowed = ["http://localhost:5173", "http://localhost", "capacitor://localhost"];
+            const allowed = [
+              "http://localhost:5173",
+              "http://localhost",
+              "capacitor://localhost",
+              "https://wartalap.onrender.com",
+              "http://wartalap.onrender.com"
+            ];
             if (!origin || allowed.includes(origin)) {
               callback(null, true);
             } else {

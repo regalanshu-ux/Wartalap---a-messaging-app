@@ -23,7 +23,9 @@ app.use(cookieParser());
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost",
-  "capacitor://localhost"
+  "capacitor://localhost",
+  "https://wartalap.onrender.com",
+  "http://wartalap.onrender.com"
 ];
 
 app.use(cors({
