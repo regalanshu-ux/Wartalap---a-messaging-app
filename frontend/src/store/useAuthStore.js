@@ -5,6 +5,9 @@ import { io } from "socket.io-client";
 
 const getBackendBaseUrl = () => {
   if (typeof window !== "undefined" && window.Capacitor) {
+    if (import.meta.env.MODE === "production") {
+      return "https://wartalap.onrender.com";
+    }
     return "http://192.168.1.40:5001";
   }
   if (typeof window !== "undefined" && window.location) {
