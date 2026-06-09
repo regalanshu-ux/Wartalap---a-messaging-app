@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { useAuthStore } from "./useAuthStore";
 import toast from "react-hot-toast";
+import { axiosInstance } from "../lib/axios.js";
 
 let peerConnection = null;
 let localStream = null;
@@ -148,8 +149,14 @@ export const useCallStore = create((set, get) => ({
       localStream = stream;
       set({ localStream: stream });
 
-      peerConnection = new RTCPeerConnection({
-        iceServers: [
+      // Fetch dynamic ICE servers from backend
+      let iceServers = [];
+      try {
+        const res = await axiosInstance.get("/auth/turn-credentials");
+        iceServers = res.data;
+      } catch (err) {
+        console.warn("Failed to fetch dynamic ICE servers, falling back to static configurations:", err);
+        iceServers = [
           { urls: "stun:stun.l.google.com:19302" },
           { urls: "stun:stun1.l.google.com:19302" },
           { urls: "stun:openrelay.metered.ca:80" },
@@ -162,8 +169,10 @@ export const useCallStore = create((set, get) => ({
             username: "openrelayproject",
             credential: "openrelayproject"
           }
-        ],
-      });
+        ];
+      }
+
+      peerConnection = new RTCPeerConnection({ iceServers });
 
       stream.getTracks().forEach((track) => {
         peerConnection.addTrack(track, stream);
@@ -223,8 +232,14 @@ export const useCallStore = create((set, get) => ({
       localStream = stream;
       set({ localStream: stream, callState: "active" });
 
-      peerConnection = new RTCPeerConnection({
-        iceServers: [
+      // Fetch dynamic ICE servers from backend
+      let iceServers = [];
+      try {
+        const res = await axiosInstance.get("/auth/turn-credentials");
+        iceServers = res.data;
+      } catch (err) {
+        console.warn("Failed to fetch dynamic ICE servers, falling back to static configurations:", err);
+        iceServers = [
           { urls: "stun:stun.l.google.com:19302" },
           { urls: "stun:stun1.l.google.com:19302" },
           { urls: "stun:openrelay.metered.ca:80" },
@@ -237,8 +252,10 @@ export const useCallStore = create((set, get) => ({
             username: "openrelayproject",
             credential: "openrelayproject"
           }
-        ],
-      });
+        ];
+      }
+
+      peerConnection = new RTCPeerConnection({ iceServers });
 
       stream.getTracks().forEach((track) => {
         peerConnection.addTrack(track, stream);

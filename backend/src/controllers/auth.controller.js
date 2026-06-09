@@ -320,3 +320,57 @@ export const resetPassword = async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+export const getTurnCredentials = async (req, res) => {
+  try {
+    const apiKey = process.env.METERED_API_KEY;
+    const appName = process.env.METERED_APP_NAME;
+
+    const staticIceServers = [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun1.l.google.com:19302" },
+      { urls: "stun:openrelay.metered.ca:80" },
+      {
+        urls: [
+          "turn:openrelay.metered.ca:80?transport=udp",
+          "turn:openrelay.metered.ca:443?transport=tcp",
+          "turns:openrelay.metered.ca:443?transport=tcp"
+        ],
+        username: "openrelayproject",
+        credential: "openrelayproject"
+      }
+    ];
+
+    if (!apiKey || !appName) {
+      // Return static fallback ICE servers if API Key is not set up
+      return res.status(200).json(staticIceServers);
+    }
+
+    // Dynamic fetch from Metered.ca API
+    const response = await fetch(`https://${appName}.metered.live/api/v1/turn/credentials?apiKey=${apiKey}`);
+    if (!response.ok) {
+      console.warn("Metered.ca API failed, falling back to static servers");
+      return res.status(200).json(staticIceServers);
+    }
+
+    const iceServers = await response.json();
+    res.status(200).json(iceServers);
+  } catch (error) {
+    console.error("Error in getTurnCredentials controller:", error.message);
+    // Silent failover to static servers
+    res.status(200).json([
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun1.l.google.com:19302" },
+      { urls: "stun:openrelay.metered.ca:80" },
+      {
+        urls: [
+          "turn:openrelay.metered.ca:80?transport=udp",
+          "turn:openrelay.metered.ca:443?transport=tcp",
+          "turns:openrelay.metered.ca:443?transport=tcp"
+        ],
+        username: "openrelayproject",
+        credential: "openrelayproject"
+      }
+    ]);
+  }
+};
