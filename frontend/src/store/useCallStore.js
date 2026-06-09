@@ -7,9 +7,11 @@ let localStream = null;
 let queuedCandidates = [];
 
 // Helper to optimize SDP for low bandwidth (e.g., 2G connections)
-const optimizeSdpAudio = (sdp) => {
+const optimizeSdp = (sdp) => {
   if (!sdp) return sdp;
-  return sdp.replace(/a=fmtp:(\d+) (.*)/g, (match, pt, params) => {
+  
+  // 1. Optimize Audio parameters (limit bitrate to 16kbps, enable DTX)
+  let modifiedSdp = sdp.replace(/a=fmtp:(\d+) (.*)/g, (match, pt, params) => {
     if (params.includes("useinbandfec")) {
       let updatedParams = params;
       if (!params.includes("maxaveragebitrate")) {
@@ -22,6 +24,13 @@ const optimizeSdpAudio = (sdp) => {
     }
     return match;
   });
+
+  // 2. Optimize Video parameters (limit video bitrate to 80kbps for 2G)
+  if (modifiedSdp.includes("m=video")) {
+    modifiedSdp = modifiedSdp.replace(/(m=video.*\r?\n)/, "$1b=AS:80\r\n");
+  }
+
+  return modifiedSdp;
 };
 
 export const useCallStore = create((set, get) => ({
@@ -127,10 +136,15 @@ export const useCallStore = create((set, get) => ({
     });
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
+      const constraints = {
         audio: true,
-        video: callType === "video",
-      });
+        video: callType === "video" ? {
+          width: { ideal: 320, max: 640 },
+          height: { ideal: 240, max: 480 },
+          frameRate: { ideal: 8, max: 12 }
+        } : false
+      };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       localStream = stream;
       set({ localStream: stream });
 
@@ -171,7 +185,7 @@ export const useCallStore = create((set, get) => ({
       };
 
       const offer = await peerConnection.createOffer();
-      const optimizedSdp = optimizeSdpAudio(offer.sdp);
+      const optimizedSdp = optimizeSdp(offer.sdp);
       const optimizedOffer = new RTCSessionDescription({
         type: offer.type,
         sdp: optimizedSdp,
@@ -197,10 +211,15 @@ export const useCallStore = create((set, get) => ({
     if (!socket || !caller || !incomingSignal) return;
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
+      const constraints = {
         audio: true,
-        video: callType === "video",
-      });
+        video: callType === "video" ? {
+          width: { ideal: 320, max: 640 },
+          height: { ideal: 240, max: 480 },
+          frameRate: { ideal: 8, max: 12 }
+        } : false
+      };
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       localStream = stream;
       set({ localStream: stream, callState: "active" });
 
@@ -252,7 +271,7 @@ export const useCallStore = create((set, get) => ({
       queuedCandidates = [];
 
       const answer = await peerConnection.createAnswer();
-      const optimizedSdp = optimizeSdpAudio(answer.sdp);
+      const optimizedSdp = optimizeSdp(answer.sdp);
       const optimizedAnswer = new RTCSessionDescription({
         type: answer.type,
         sdp: optimizedSdp,
