@@ -6,6 +6,24 @@ let peerConnection = null;
 let localStream = null;
 let queuedCandidates = [];
 
+// Helper to optimize SDP for low bandwidth (e.g., 2G connections)
+const optimizeSdpAudio = (sdp) => {
+  if (!sdp) return sdp;
+  return sdp.replace(/a=fmtp:(\d+) (.*)/g, (match, pt, params) => {
+    if (params.includes("useinbandfec")) {
+      let updatedParams = params;
+      if (!params.includes("maxaveragebitrate")) {
+        updatedParams += ";maxaveragebitrate=16000"; // Limit to 16 kbps (perfect for 2G)
+      }
+      if (!params.includes("usedtx")) {
+        updatedParams += ";usedtx=1"; // Enable Discontinuous Transmission (saves bandwidth during silence)
+      }
+      return `a=fmtp:${pt} ${updatedParams}`;
+    }
+    return match;
+  });
+};
+
 export const useCallStore = create((set, get) => ({
   callState: "idle", // "idle", "dialing", "incoming", "active"
   callType: null, // "voice", "video"
@@ -153,11 +171,16 @@ export const useCallStore = create((set, get) => ({
       };
 
       const offer = await peerConnection.createOffer();
-      await peerConnection.setLocalDescription(offer);
+      const optimizedSdp = optimizeSdpAudio(offer.sdp);
+      const optimizedOffer = new RTCSessionDescription({
+        type: offer.type,
+        sdp: optimizedSdp,
+      });
+      await peerConnection.setLocalDescription(optimizedOffer);
 
       socket.emit("call-user", {
         userToCall: callee._id,
-        signalData: offer,
+        signalData: optimizedOffer,
         from: useAuthStore.getState().authUser,
         callType,
       });
@@ -229,11 +252,16 @@ export const useCallStore = create((set, get) => ({
       queuedCandidates = [];
 
       const answer = await peerConnection.createAnswer();
-      await peerConnection.setLocalDescription(answer);
+      const optimizedSdp = optimizeSdpAudio(answer.sdp);
+      const optimizedAnswer = new RTCSessionDescription({
+        type: answer.type,
+        sdp: optimizedSdp,
+      });
+      await peerConnection.setLocalDescription(optimizedAnswer);
 
       socket.emit("answer-call", {
         to: caller._id,
-        signal: answer,
+        signal: optimizedAnswer,
       });
     } catch (err) {
       console.error("Failed to answer call:", err);
