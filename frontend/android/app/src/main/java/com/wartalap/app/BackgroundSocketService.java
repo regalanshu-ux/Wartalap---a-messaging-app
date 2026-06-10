@@ -12,6 +12,7 @@ import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.RingtoneManager;
+import android.content.pm.ServiceInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
@@ -95,8 +96,16 @@ public class BackgroundSocketService extends Service {
             mServerUrl = sharedPref.getString("serverUrl", null);
         }
 
-        // Display persistent foreground service notification
-        startForeground(PERSISTENT_NOTIFICATION_ID, getPersistentNotification());
+        // Display persistent foreground service notification with Android 14+ service types
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            startForeground(
+                PERSISTENT_NOTIFICATION_ID, 
+                getPersistentNotification(), 
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL | ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING
+            );
+        } else {
+            startForeground(PERSISTENT_NOTIFICATION_ID, getPersistentNotification());
+        }
 
         if (mUserId != null && mServerUrl != null) {
             connectSocket();
