@@ -2,6 +2,11 @@ import { create } from "zustand";
 import { axiosInstance } from "../lib/axios.js";
 import toast from "react-hot-toast";
 import { io } from "socket.io-client";
+import { registerPlugin } from "@capacitor/core";
+
+const BackgroundService = typeof window !== "undefined" && window.Capacitor
+  ? registerPlugin("BackgroundService")
+  : null;
 
 const getBackendBaseUrl = () => {
   if (typeof window !== "undefined") {
@@ -203,9 +208,9 @@ export const useAuthStore = create((set, get) => ({
       set({ onlineUsers: userIds });
     });
 
-    if (typeof window !== "undefined" && window.Capacitor) {
+    if (BackgroundService) {
       try {
-        window.Capacitor.Plugins.BackgroundService.startService({
+        BackgroundService.startService({
           userId: authUser._id,
           serverUrl: baseUrl,
         });
@@ -222,9 +227,9 @@ export const useAuthStore = create((set, get) => ({
     }
     set({ socket: null });
 
-    if (typeof window !== "undefined" && window.Capacitor) {
+    if (BackgroundService) {
       try {
-        window.Capacitor.Plugins.BackgroundService.stopService();
+        BackgroundService.stopService();
       } catch (err) {
         console.error("Failed to stop background service:", err);
       }
