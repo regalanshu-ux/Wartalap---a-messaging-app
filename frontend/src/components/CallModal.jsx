@@ -1,6 +1,13 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCallStore } from "../store/useCallStore";
-import { Phone, PhoneOff, Video, Mic, MicOff, VideoOff, RefreshCw } from "lucide-react";
+import { Phone, PhoneOff, Video, Mic, MicOff, VideoOff, RefreshCw, Volume2, Bluetooth, Smartphone } from "lucide-react";
+import { registerPlugin } from "@capacitor/core";
+import toast from "react-hot-toast";
+
+const BackgroundService = typeof window !== "undefined" && window.Capacitor
+  ? registerPlugin("BackgroundService")
+  : null;
+
 
 const CallModal = () => {
   const {
@@ -24,6 +31,106 @@ const CallModal = () => {
   const remoteAudioRef = useRef(null);
   const ringtoneInterval = useRef(null);
   const audioCtx = useRef(null);
+
+  const [audioOutputs, setAudioOutputs] = useState([]);
+  const [selectedSinkId, setSelectedSinkId] = useState("default");
+  const [androidOutputs, setAndroidOutputs] = useState({ earpiece: true, speaker: true, bluetooth: false });
+  const [currentAndroidRoute, setCurrentAndroidRoute] = useState("earpiece");
+  const [isAudioRouteOpen, setIsAudioRouteOpen] = useState(false);
+
+  // Get output devices for standard Web browsers
+  const getWebAudioOutputs = async () => {
+    try {
+      if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const outputs = devices.filter((device) => device.kind === "audiooutput");
+        setAudioOutputs(outputs);
+        
+        const defaultDev = outputs.find(d => d.deviceId === "default") || outputs[0];
+        if (defaultDev) {
+          setSelectedSinkId(defaultDev.deviceId);
+        }
+      }
+    } catch (err) {
+      console.warn("Failed to enumerate audio output devices:", err);
+    }
+  };
+
+  // Get available audio outputs on Android
+  const getAndroidAudioOutputs = async () => {
+    if (BackgroundService) {
+      try {
+        const res = await BackgroundService.getAvailableAudioOutputs();
+        setAndroidOutputs({
+          earpiece: res.earpiece !== false,
+          speaker: res.speaker !== false,
+          bluetooth: res.bluetooth === true
+        });
+      } catch (err) {
+        console.warn("Failed to get Android audio outputs:", err);
+      }
+    }
+  };
+
+  // Apply default audio routing when call starts
+  const applyDefaultRouting = async () => {
+    if (window.Capacitor && BackgroundService) {
+      try {
+        const res = await BackgroundService.getAvailableAudioOutputs();
+        const hasBluetooth = res.bluetooth === true;
+        
+        let initialRoute = "earpiece";
+        if (callType === "video") {
+          initialRoute = "speaker";
+        } else if (hasBluetooth) {
+          initialRoute = "bluetooth";
+        }
+        
+        await BackgroundService.setAudioOutput({ route: initialRoute });
+        setCurrentAndroidRoute(initialRoute);
+        setAndroidOutputs({
+          earpiece: res.earpiece !== false,
+          speaker: res.speaker !== false,
+          bluetooth: hasBluetooth
+        });
+      } catch (err) {
+        console.error("Failed to set default Android audio output:", err);
+      }
+    } else {
+      await getWebAudioOutputs();
+    }
+  };
+
+  // Handle switching audio output on Web
+  const handleWebSinkChange = async (sinkId) => {
+    setSelectedSinkId(sinkId);
+    try {
+      if (remoteAudioRef.current && typeof remoteAudioRef.current.setSinkId === "function") {
+        await remoteAudioRef.current.setSinkId(sinkId);
+      }
+      if (remoteVideoRef.current && typeof remoteVideoRef.current.setSinkId === "function") {
+        await remoteVideoRef.current.setSinkId(sinkId);
+      }
+      toast.success("Audio output changed");
+    } catch (err) {
+      console.error("Failed to set sink ID:", err);
+      toast.error("Failed to change audio device");
+    }
+  };
+
+  // Handle switching audio output on Android
+  const handleAndroidRouteChange = async (route) => {
+    if (BackgroundService) {
+      try {
+        await BackgroundService.setAudioOutput({ route });
+        setCurrentAndroidRoute(route);
+        toast.success(`Audio routed to ${route}`);
+      } catch (err) {
+        console.error(`Failed to route audio to ${route}:`, err);
+        toast.error(err.message || `Failed to route audio to ${route}`);
+      }
+    }
+  };
 
   // Web Audio Synthesized Ringtone
   const startRingtone = (type) => {
@@ -119,6 +226,41 @@ const CallModal = () => {
       remoteAudioRef.current.srcObject = remoteStream;
     }
   }, [remoteStream, callState, callType]);
+
+  // Handle call active audio routing lifecycle
+  useEffect(() => {
+    if (callState === "active") {
+      applyDefaultRouting();
+      
+      // Setup listener/poller for device additions/removals
+      if (!window.Capacitor && navigator.mediaDevices && navigator.mediaDevices.addEventListener) {
+        navigator.mediaDevices.addEventListener("devicechange", getWebAudioOutputs);
+      }
+      
+      // On Android, poll for changes in available devices every 3 seconds to auto-detect Bluetooth connections
+      let androidPollInterval = null;
+      if (window.Capacitor) {
+        androidPollInterval = setInterval(getAndroidAudioOutputs, 3000);
+      }
+
+      return () => {
+        if (!window.Capacitor && navigator.mediaDevices && navigator.mediaDevices.removeEventListener) {
+          navigator.mediaDevices.removeEventListener("devicechange", getWebAudioOutputs);
+        }
+        if (androidPollInterval) {
+          clearInterval(androidPollInterval);
+        }
+      };
+    } else if (callState === "idle" || callState === "incoming" || callState === "dialing") {
+      // Clean up sound routing when not in an active call
+      if (window.Capacitor && BackgroundService) {
+        BackgroundService.resetAudioOutput().catch((err) => {
+          console.warn("Failed to reset Android audio output:", err);
+        });
+      }
+      setIsAudioRouteOpen(false);
+    }
+  }, [callState]);
 
   if (callState === "idle") return null;
 
@@ -302,6 +444,114 @@ const CallModal = () => {
             >
               {isMuted ? <MicOff className="size-5" /> : <Mic className="size-5" />}
             </button>
+
+            {/* Sound Output Selection */}
+            <div className="relative">
+              <button
+                onClick={() => setIsAudioRouteOpen(!isAudioRouteOpen)}
+                className={`btn btn-circle size-12 btn-tactile border border-white/10 flex items-center justify-center shadow-lg transition-colors ${
+                  isAudioRouteOpen
+                    ? "bg-primary text-white border-primary"
+                    : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                }`}
+                title="Sound Output Device"
+              >
+                {window.Capacitor ? (
+                  currentAndroidRoute === "speaker" ? <Volume2 className="size-5" /> :
+                  currentAndroidRoute === "bluetooth" ? <Bluetooth className="size-5" /> :
+                  <Smartphone className="size-5" />
+                ) : (
+                  <Volume2 className="size-5" />
+                )}
+              </button>
+
+              {isAudioRouteOpen && (
+                <div className="absolute bottom-16 left-1/2 -translate-x-1/2 w-48 bg-zinc-900 border border-white/10 rounded-2xl shadow-2xl p-2 z-[100] flex flex-col gap-1 text-zinc-100 animate-fade-in-up">
+                  <div className="text-[9px] uppercase tracking-widest text-zinc-500 font-extrabold px-2 py-1 select-none text-center border-b border-white/5 pb-1 mb-1">
+                    Sound Output
+                  </div>
+                  {window.Capacitor ? (
+                    <>
+                      {androidOutputs.earpiece && (
+                        <button
+                          onClick={() => {
+                            handleAndroidRouteChange("earpiece");
+                            setIsAudioRouteOpen(false);
+                          }}
+                          className={`flex items-center gap-2.5 w-full text-left px-2.5 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer ${
+                            currentAndroidRoute === "earpiece"
+                              ? "bg-primary text-white font-bold"
+                              : "hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200"
+                          }`}
+                        >
+                          <Smartphone className="size-4 shrink-0" />
+                          Earpiece
+                        </button>
+                      )}
+                      {androidOutputs.speaker && (
+                        <button
+                          onClick={() => {
+                            handleAndroidRouteChange("speaker");
+                            setIsAudioRouteOpen(false);
+                          }}
+                          className={`flex items-center gap-2.5 w-full text-left px-2.5 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer ${
+                            currentAndroidRoute === "speaker"
+                              ? "bg-primary text-white font-bold"
+                              : "hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200"
+                          }`}
+                        >
+                          <Volume2 className="size-4 shrink-0" />
+                          Speaker
+                        </button>
+                      )}
+                      {androidOutputs.bluetooth && (
+                        <button
+                          onClick={() => {
+                            handleAndroidRouteChange("bluetooth");
+                            setIsAudioRouteOpen(false);
+                          }}
+                          className={`flex items-center gap-2.5 w-full text-left px-2.5 py-1.5 text-xs font-semibold rounded-xl transition-all cursor-pointer ${
+                            currentAndroidRoute === "bluetooth"
+                              ? "bg-primary text-white font-bold"
+                              : "hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200"
+                          }`}
+                        >
+                          <Bluetooth className="size-4 shrink-0" />
+                          Bluetooth
+                        </button>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      {audioOutputs.length === 0 ? (
+                        <div className="text-zinc-500 text-[10px] text-center py-2">
+                          No audio outputs found
+                        </div>
+                      ) : (
+                        audioOutputs.map((device) => (
+                          <button
+                            key={device.deviceId}
+                            onClick={() => {
+                              handleWebSinkChange(device.deviceId);
+                              setIsAudioRouteOpen(false);
+                            }}
+                            className={`flex items-center gap-2 w-full text-left px-2.5 py-1.5 text-xs font-semibold rounded-xl truncate transition-all cursor-pointer ${
+                              selectedSinkId === device.deviceId
+                                ? "bg-primary text-white font-bold"
+                                : "hover:bg-zinc-800 text-zinc-400 hover:text-zinc-200"
+                            }`}
+                            title={device.label || "Audio Device"}
+                          >
+                            <Volume2 className="size-4 shrink-0" />
+                            <span className="truncate">{device.label || "Output Device"}</span>
+                          </button>
+                        ))
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* End Call */}
             <button
