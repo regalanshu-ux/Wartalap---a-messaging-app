@@ -7,31 +7,9 @@ let peerConnection = null;
 let localStream = null;
 let queuedCandidates = [];
 
-// Helper to optimize SDP for low bandwidth (e.g., 2G connections)
+// Helper to optimize SDP - disabled manual overrides to let WebRTC auto-negotiate bandwidth
 const optimizeSdp = (sdp) => {
-  if (!sdp) return sdp;
-  
-  // 1. Optimize Audio parameters (limit bitrate to 16kbps, enable DTX)
-  let modifiedSdp = sdp.replace(/a=fmtp:(\d+) (.*)/g, (match, pt, params) => {
-    if (params.includes("useinbandfec")) {
-      let updatedParams = params;
-      if (!params.includes("maxaveragebitrate")) {
-        updatedParams += ";maxaveragebitrate=16000"; // Limit to 16 kbps (perfect for 2G)
-      }
-      if (!params.includes("usedtx")) {
-        updatedParams += ";usedtx=1"; // Enable Discontinuous Transmission (saves bandwidth during silence)
-      }
-      return `a=fmtp:${pt} ${updatedParams}`;
-    }
-    return match;
-  });
-
-  // 2. Optimize Video parameters (limit video bitrate to 80kbps for 2G)
-  if (modifiedSdp.includes("m=video")) {
-    modifiedSdp = modifiedSdp.replace(/(m=video.*\r?\n)/, "$1b=AS:80\r\n");
-  }
-
-  return modifiedSdp;
+  return sdp;
 };
 
 export const useCallStore = create((set, get) => ({
