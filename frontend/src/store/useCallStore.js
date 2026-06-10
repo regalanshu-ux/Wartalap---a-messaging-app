@@ -15,6 +15,7 @@ const optimizeSdp = (sdp) => {
 export const useCallStore = create((set, get) => ({
   callState: "idle", // "idle", "dialing", "incoming", "active"
   callType: null, // "voice", "video"
+  callId: null,
   caller: null,
   callee: null,
   localStream: null,
@@ -27,13 +28,14 @@ export const useCallStore = create((set, get) => ({
     if (!socket) return;
 
     socket.off("incoming-call");
+    socket.off("call-initiated");
     socket.off("call-accepted");
     socket.off("call-rejected");
     socket.off("call-ended");
     socket.off("ice-candidate");
     socket.off("call-busy");
 
-    socket.on("incoming-call", ({ signal, from, callType }) => {
+    socket.on("incoming-call", ({ callId, signal, from, callType }) => {
       const currentCallState = get().callState;
       if (currentCallState !== "idle") {
         socket.emit("call-busy", { to: from._id });
@@ -41,6 +43,7 @@ export const useCallStore = create((set, get) => ({
       }
 
       set({
+        callId,
         callState: "incoming",
         callType,
         caller: from,
@@ -49,7 +52,11 @@ export const useCallStore = create((set, get) => ({
       });
     });
 
-    socket.on("call-accepted", async ({ signal }) => {
+    socket.on("call-initiated", ({ callId }) => {
+      set({ callId });
+    });
+
+    socket.on("call-accepted", async ({ callId, signal }) => {
       const state = get();
       if (state.callState !== "dialing" || !peerConnection) return;
 
@@ -205,7 +212,7 @@ export const useCallStore = create((set, get) => ({
 
   answerCall: async () => {
     const socket = useAuthStore.getState().socket;
-    const { incomingSignal, caller, callType } = get();
+    const { incomingSignal, caller, callType, callId } = get();
     if (!socket || !caller || !incomingSignal) return;
 
     try {
@@ -298,6 +305,7 @@ export const useCallStore = create((set, get) => ({
       socket.emit("answer-call", {
         to: caller._id,
         signal: optimizedAnswer,
+        callId,
       });
     } catch (err) {
       console.error("Failed to answer call:", err);
@@ -308,20 +316,20 @@ export const useCallStore = create((set, get) => ({
 
   rejectCall: () => {
     const socket = useAuthStore.getState().socket;
-    const { caller } = get();
+    const { caller, callId } = get();
     if (socket && caller) {
-      socket.emit("reject-call", { to: caller._id });
+      socket.emit("reject-call", { to: caller._id, callId });
     }
     get().resetCallState();
   },
 
   endCall: () => {
     const socket = useAuthStore.getState().socket;
-    const { caller, callee } = get();
+    const { caller, callee, callId } = get();
     const otherUser = caller?._id === useAuthStore.getState().authUser?._id ? callee : caller;
 
     if (socket && otherUser) {
-      socket.emit("end-call", { to: otherUser._id });
+      socket.emit("end-call", { to: otherUser._id, callId });
     }
     get().resetCallState();
   },
@@ -359,6 +367,7 @@ export const useCallStore = create((set, get) => ({
     set({
       callState: "idle",
       callType: null,
+      callId: null,
       caller: null,
       callee: null,
       localStream: null,
