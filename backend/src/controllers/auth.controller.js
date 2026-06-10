@@ -356,7 +356,7 @@ export const getTurnCredentials = async (req, res) => {
     const iceServers = await response.json();
     res.status(200).json(iceServers);
   } catch (error) {
-    console.error("Error in getTurnCredentials controller:", error.message);
+    console.error("Error in getTurnCredentials controller:", error);
     // Silent failover to static servers
     res.status(200).json([
       { urls: "stun:stun.l.google.com:19302" },
