@@ -149,8 +149,19 @@ export const useCallStore = create((set, get) => ({
           }
         ];
       }
-
+      console.log("Initializing RTCPeerConnection with ICE servers:", iceServers);
       peerConnection = new RTCPeerConnection({ iceServers });
+
+      peerConnection.oniceconnectionstatechange = () => {
+        console.log("ICE Connection State Change:", peerConnection.iceConnectionState);
+        if (peerConnection.iceConnectionState === "failed") {
+          console.warn("ICE Connection failed. Check TURN credentials and NAT configurations.");
+        }
+      };
+
+      peerConnection.onconnectionstatechange = () => {
+        console.log("Peer Connection State Change:", peerConnection.connectionState);
+      };
 
       stream.getTracks().forEach((track) => {
         peerConnection.addTrack(track, stream);
@@ -232,8 +243,19 @@ export const useCallStore = create((set, get) => ({
           }
         ];
       }
-
+      console.log("Initializing RTCPeerConnection with ICE servers:", iceServers);
       peerConnection = new RTCPeerConnection({ iceServers });
+
+      peerConnection.oniceconnectionstatechange = () => {
+        console.log("ICE Connection State Change:", peerConnection.iceConnectionState);
+        if (peerConnection.iceConnectionState === "failed") {
+          console.warn("ICE Connection failed. Check TURN credentials and NAT configurations.");
+        }
+      };
+
+      peerConnection.onconnectionstatechange = () => {
+        console.log("Peer Connection State Change:", peerConnection.connectionState);
+      };
 
       stream.getTracks().forEach((track) => {
         peerConnection.addTrack(track, stream);
