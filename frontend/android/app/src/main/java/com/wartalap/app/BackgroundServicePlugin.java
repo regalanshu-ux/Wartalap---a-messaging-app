@@ -226,7 +226,7 @@ public class BackgroundServicePlugin extends Plugin {
                 }
             } else {
                 hasEarpiece = true; // default assumption for smartphones
-                hasBluetooth = audioManager.isBluetoothScoAvailable();
+                hasBluetooth = audioManager.isBluetoothScoAvailableOffCall();
             }
 
             response.put("earpiece", hasEarpiece);
