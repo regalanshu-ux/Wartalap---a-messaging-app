@@ -101,7 +101,7 @@ public class BackgroundSocketService extends Service {
             startForeground(
                 PERSISTENT_NOTIFICATION_ID, 
                 getPersistentNotification(), 
-                ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL | ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING
             );
         } else {
             startForeground(PERSISTENT_NOTIFICATION_ID, getPersistentNotification());
