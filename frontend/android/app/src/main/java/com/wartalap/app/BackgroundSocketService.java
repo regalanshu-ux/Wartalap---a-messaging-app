@@ -15,6 +15,7 @@ import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
+import android.os.PowerManager;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.util.Log;
@@ -46,12 +47,20 @@ public class BackgroundSocketService extends Service {
 
     private MediaPlayer mMediaPlayer;
     private Vibrator mVibrator;
+    private PowerManager.WakeLock mWakeLock;
 
     @Override
     public void onCreate() {
         super.onCreate();
         Log.d(TAG, "Service onCreate");
         createNotificationChannels();
+
+        // Acquire WakeLock to keep CPU running when screen is off
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        if (pm != null) {
+            mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Wartalap::SocketWakeLock");
+            mWakeLock.acquire();
+        }
     }
 
     @Override
@@ -397,6 +406,9 @@ public class BackgroundSocketService extends Service {
             mSocket.disconnect();
             mSocket.off();
             mSocket = null;
+        }
+        if (mWakeLock != null && mWakeLock.isHeld()) {
+            mWakeLock.release();
         }
         super.onDestroy();
     }
