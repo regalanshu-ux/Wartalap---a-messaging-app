@@ -17,10 +17,10 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        
-        // Register the custom background service plugin
+        // Register the custom background service plugin BEFORE super.onCreate()
         registerPlugin(BackgroundServicePlugin.class);
+        
+        super.onCreate(savedInstanceState);
 
         // Request notification permission if SDK >= 33
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
