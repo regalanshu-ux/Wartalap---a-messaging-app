@@ -1,6 +1,6 @@
 import User from "../models/user.model.js";
 import FriendRequest from "../models/friendRequest.model.js";
-import { getReceiverSocketId, io } from "../lib/socket.js";
+import { getReceiverSocketIds, io } from "../lib/socket.js";
 
 // Search users and return their connection status relative to the logged-in user
 export const searchUsers = async (req, res) => {
@@ -106,15 +106,17 @@ export const sendFriendRequest = async (req, res) => {
     await newRequest.save();
 
     // Notify the receiver via socket
-    const receiverSocketId = getReceiverSocketId(receiverId);
-    if (receiverSocketId) {
+    const receiverSocketIds = getReceiverSocketIds(receiverId);
+    if (receiverSocketIds.length > 0) {
       const populatedSender = await User.findById(senderId).select("-password");
-      io.to(receiverSocketId).emit("friendRequestReceived", {
-        _id: newRequest._id,
-        senderId: populatedSender,
-        receiverId,
-        status: "pending",
-        createdAt: newRequest.createdAt,
+      receiverSocketIds.forEach(socketId => {
+        io.to(socketId).emit("friendRequestReceived", {
+          _id: newRequest._id,
+          senderId: populatedSender,
+          receiverId,
+          status: "pending",
+          createdAt: newRequest.createdAt,
+        });
       });
     }
 
@@ -153,20 +155,20 @@ export const acceptFriendRequest = async (req, res) => {
     const populatedSender = await User.findById(senderId).select("-password");
 
     // Notify original sender via socket
-    const senderSocketId = getReceiverSocketId(senderId);
-    if (senderSocketId) {
-      io.to(senderSocketId).emit("friendRequestAccepted", {
+    const senderSocketIds = getReceiverSocketIds(senderId);
+    senderSocketIds.forEach(socketId => {
+      io.to(socketId).emit("friendRequestAccepted", {
         friend: populatedReceiver,
       });
-    }
+    });
 
     // Also notify current receiver (for UI update)
-    const receiverSocketId = getReceiverSocketId(receiverId);
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("friendRequestAccepted", {
+    const receiverSocketIds = getReceiverSocketIds(receiverId);
+    receiverSocketIds.forEach(socketId => {
+      io.to(socketId).emit("friendRequestAccepted", {
         friend: populatedSender,
       });
-    }
+    });
 
     res.status(200).json({ message: "Friend request accepted" });
   } catch (error) {
@@ -196,12 +198,12 @@ export const rejectFriendRequest = async (req, res) => {
     }
 
     // Notify original sender via socket
-    const senderSocketId = getReceiverSocketId(senderId);
-    if (senderSocketId) {
-      io.to(senderSocketId).emit("friendRequestRejected", {
+    const senderSocketIds = getReceiverSocketIds(senderId);
+    senderSocketIds.forEach(socketId => {
+      io.to(socketId).emit("friendRequestRejected", {
         userId: receiverId,
       });
-    }
+    });
 
     res.status(200).json({ message: "Friend request rejected" });
   } catch (error) {
@@ -231,12 +233,12 @@ export const cancelFriendRequest = async (req, res) => {
     }
 
     // Notify receiver via socket so they can clear it from incoming list
-    const receiverSocketId = getReceiverSocketId(receiverId);
-    if (receiverSocketId) {
-      io.to(receiverSocketId).emit("friendRequestCancelled", {
+    const receiverSocketIds = getReceiverSocketIds(receiverId);
+    receiverSocketIds.forEach(socketId => {
+      io.to(socketId).emit("friendRequestCancelled", {
         senderId,
       });
-    }
+    });
 
     res.status(200).json({ message: "Friend request cancelled" });
   } catch (error) {

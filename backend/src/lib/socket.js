@@ -29,70 +29,81 @@ const io = new Server(server, {
     }
 });
 
-// Used to store online users: { userId: socketId }
+// Used to store online users: { userId: Set<socketId> }
 const userSocketMap = {};
 
+export function getReceiverSocketIds(receiverId) {
+    return userSocketMap[receiverId] ? Array.from(userSocketMap[receiverId]) : [];
+}
+
 export function getReceiverSocketId(receiverId) {
-    return userSocketMap[receiverId];
+    const ids = getReceiverSocketIds(receiverId);
+    return ids.length > 0 ? ids[0] : null;
 }
 
 io.on("connection", (socket) => {
     const userId = socket.handshake.query.userId;
     if (userId && userId !== "undefined") {
-        userSocketMap[userId] = socket.id;
+        if (!userSocketMap[userId]) {
+            userSocketMap[userId] = new Set();
+        }
+        userSocketMap[userId].add(socket.id);
     }
 
     // Broadcast the list of online user IDs to all clients
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
     socket.on("disconnect", () => {
-        if (userId) {
-            delete userSocketMap[userId];
+        if (userId && userSocketMap[userId]) {
+            userSocketMap[userId].delete(socket.id);
+            if (userSocketMap[userId].size === 0) {
+                delete userSocketMap[userId];
+            }
         }
         io.emit("getOnlineUsers", Object.keys(userSocketMap));
     });
 
     // Call signaling events
     socket.on("call-user", ({ userToCall, signalData, from, callType }) => {
-        const receiverSocketId = getReceiverSocketId(userToCall);
-        if (receiverSocketId) {
-            io.to(receiverSocketId).emit("incoming-call", { signal: signalData, from, callType });
-        }
+        const receiverSocketIds = getReceiverSocketIds(userToCall);
+        receiverSocketIds.forEach(socketId => {
+            io.to(socketId).emit("incoming-call", { signal: signalData, from, callType });
+        });
     });
 
     socket.on("answer-call", ({ to, signal }) => {
-        const callerSocketId = getReceiverSocketId(to);
-        if (callerSocketId) {
-            io.to(callerSocketId).emit("call-accepted", { signal });
-        }
+        const callerSocketIds = getReceiverSocketIds(to);
+        callerSocketIds.forEach(socketId => {
+            io.to(socketId).emit("call-accepted", { signal });
+        });
     });
 
     socket.on("reject-call", ({ to }) => {
-        const callerSocketId = getReceiverSocketId(to);
-        if (callerSocketId) {
-            io.to(callerSocketId).emit("call-rejected");
-        }
+        const callerSocketIds = getReceiverSocketIds(to);
+        callerSocketIds.forEach(socketId => {
+            io.to(socketId).emit("call-rejected");
+        });
     });
 
     socket.on("end-call", ({ to }) => {
-        const receiverSocketId = getReceiverSocketId(to);
-        if (receiverSocketId) {
+        const receiverSocketIds = getReceiverSocketIds(to);
+        receiverSocketIds.forEach(socketId => {
             io.to(receiverSocketId).emit("call-ended");
-        }
+        });
     });
 
     socket.on("send-ice-candidate", ({ to, candidate }) => {
-        const receiverSocketId = getReceiverSocketId(to);
-        if (receiverSocketId) {
-            io.to(receiverSocketId).emit("ice-candidate", { candidate });
-        }
+        const receiverSocketIds = getReceiverSocketIds(to);
+        receiverSocketIds.forEach(socketId => {
+            io.to(socketId).emit("ice-candidate", { candidate });
+        });
     });
 
     socket.on("call-busy", ({ to }) => {
-        const callerSocketId = getReceiverSocketId(to);
-        if (callerSocketId) {
+        const callerSocketIds = getReceiverSocketIds(to);
+        callerSocketIds.forEach(socketId => {
             io.to(callerSocketId).emit("call-busy");
-        }
+        });
     });
 });
 

@@ -2,7 +2,7 @@ import User from "../models/user.model.js";
 import Message from "../models/message.model.js";
 import FriendRequest from "../models/friendRequest.model.js";
 import cloudinary from "../lib/cloudnary.js";
-import { getReceiverSocketId, io } from "../lib/socket.js";
+import { getReceiverSocketIds, io } from "../lib/socket.js";
 
 export const getUserForSidebar = async(req,res) => {
     try{
@@ -70,10 +70,15 @@ export const sendMessage= async (req,res)=> {
 
         await newMessage.save();
 
-        const receiverSocketId = getReceiverSocketId(receiverId);
-        if (receiverSocketId) {
-            io.to(receiverSocketId).emit("newMessage", newMessage);
-        }
+        const sender = await User.findById(senderId).select("fullName");
+        const receiverSocketIds = getReceiverSocketIds(receiverId);
+        const emitData = {
+            ...newMessage.toObject(),
+            senderName: sender ? sender.fullName : "A friend"
+        };
+        receiverSocketIds.forEach(socketId => {
+            io.to(socketId).emit("newMessage", emitData);
+        });
 
         res.status(201).json(newMessage)
     } catch (error) {

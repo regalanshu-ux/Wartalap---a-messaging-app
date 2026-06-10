@@ -202,6 +202,17 @@ export const useAuthStore = create((set, get) => ({
     newSocket.on("getOnlineUsers", (userIds) => {
       set({ onlineUsers: userIds });
     });
+
+    if (typeof window !== "undefined" && window.Capacitor) {
+      try {
+        window.Capacitor.Plugins.BackgroundService.startService({
+          userId: authUser._id,
+          serverUrl: baseUrl,
+        });
+      } catch (err) {
+        console.error("Failed to start background service:", err);
+      }
+    }
   },
 
   disconnectSocket: () => {
@@ -210,5 +221,13 @@ export const useAuthStore = create((set, get) => ({
       socket.disconnect();
     }
     set({ socket: null });
+
+    if (typeof window !== "undefined" && window.Capacitor) {
+      try {
+        window.Capacitor.Plugins.BackgroundService.stopService();
+      } catch (err) {
+        console.error("Failed to stop background service:", err);
+      }
+    }
   },
 }));
