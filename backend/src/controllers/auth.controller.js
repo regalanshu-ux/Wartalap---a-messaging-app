@@ -3,6 +3,7 @@ import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import cloudinary from "../lib/cloudnary.js";
 import { sendOtpEmail, sendResetPasswordOtpEmail } from "../lib/email.js";
+import https from "https";
 
 export const signup = async (req, res) => {
   const { fullName, username, email, password } = req.body;
@@ -342,22 +343,39 @@ export const getTurnCredentials = async (req, res) => {
     ];
 
     if (!apiKey || !appName) {
-      // Return static fallback ICE servers if API Key is not set up
       return res.status(200).json(staticIceServers);
     }
 
-    // Dynamic fetch from Metered.ca API
-    const response = await fetch(`https://${appName}.metered.live/api/v1/turn/credentials?apiKey=${apiKey}`);
-    if (!response.ok) {
-      console.warn("Metered.ca API failed, falling back to static servers");
-      return res.status(200).json(staticIceServers);
-    }
+    const url = `https://${appName}.metered.live/api/v1/turn/credentials?apiKey=${apiKey}`;
 
-    const iceServers = await response.json();
-    res.status(200).json(iceServers);
+    https.get(url, (apiRes) => {
+      let data = "";
+
+      apiRes.on("data", (chunk) => {
+        data += chunk;
+      });
+
+      apiRes.on("end", () => {
+        try {
+          if (apiRes.statusCode === 200) {
+            const iceServers = JSON.parse(data);
+            res.status(200).json(iceServers);
+          } else {
+            console.warn(`Metered.ca API responded with status ${apiRes.statusCode}:`, data);
+            res.status(200).json(staticIceServers);
+          }
+        } catch (e) {
+          console.error("Failed to parse Metered.ca JSON response:", e);
+          res.status(200).json(staticIceServers);
+        }
+      });
+    }).on("error", (err) => {
+      console.error("Error fetching from Metered.ca API:", err);
+      res.status(200).json(staticIceServers);
+    });
+
   } catch (error) {
     console.error("Error in getTurnCredentials controller:", error);
-    // Silent failover to static servers
     res.status(200).json([
       { urls: "stun:stun.l.google.com:19302" },
       { urls: "stun:stun1.l.google.com:19302" },
