@@ -372,7 +372,7 @@ public class BackgroundSocketService extends Service {
         );
 
         return new NotificationCompat.Builder(this, PERSISTENT_CHANNEL_ID)
-                .setContentTitle("Wartalap Background Sync")
+                .setContentTitle("वार्तालाप Background Sync")
                 .setContentText("Listening for messages and calls")
                 .setSmallIcon(android.R.drawable.ic_menu_info_details)
                 .setContentIntent(pendingIntent)

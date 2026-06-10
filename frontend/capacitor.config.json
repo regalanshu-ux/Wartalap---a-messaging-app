@@ -1,6 +1,6 @@
 {
   "appId": "com.wartalap.app",
-  "appName": "Wartalap",
+  "appName": "वार्तालाप",
   "webDir": "dist",
   "bundledWebRuntime": false,
   "plugins": {
