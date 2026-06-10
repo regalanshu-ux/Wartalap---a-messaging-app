@@ -328,17 +328,17 @@ export const getTurnCredentials = async (req, res) => {
     const appName = process.env.METERED_APP_NAME;
 
     const staticIceServers = [
+      { urls: "stun:global.relay.metered.ca:80" },
       { urls: "stun:stun.l.google.com:19302" },
-      { urls: "stun:stun1.l.google.com:19302" },
-      { urls: "stun:openrelay.metered.ca:80" },
       {
         urls: [
-          "turn:openrelay.metered.ca:80?transport=udp",
-          "turn:openrelay.metered.ca:443?transport=tcp",
-          "turns:openrelay.metered.ca:443?transport=tcp"
+          "turn:global.relay.metered.ca:80?transport=udp",
+          "turn:global.relay.metered.ca:80?transport=tcp",
+          "turn:global.relay.metered.ca:443?transport=tcp",
+          "turns:global.relay.metered.ca:443?transport=tcp"
         ],
-        username: "openrelayproject",
-        credential: "openrelayproject"
+        username: "d6de919d3373b1b8f021d120",
+        credential: "Tb+r7abeyEnCnwNH"
       }
     ];
 
@@ -376,19 +376,6 @@ export const getTurnCredentials = async (req, res) => {
 
   } catch (error) {
     console.error("Error in getTurnCredentials controller:", error);
-    res.status(200).json([
-      { urls: "stun:stun.l.google.com:19302" },
-      { urls: "stun:stun1.l.google.com:19302" },
-      { urls: "stun:openrelay.metered.ca:80" },
-      {
-        urls: [
-          "turn:openrelay.metered.ca:80?transport=udp",
-          "turn:openrelay.metered.ca:443?transport=tcp",
-          "turns:openrelay.metered.ca:443?transport=tcp"
-        ],
-        username: "openrelayproject",
-        credential: "openrelayproject"
-      }
-    ]);
+    res.status(200).json(staticIceServers);
   }
 };
