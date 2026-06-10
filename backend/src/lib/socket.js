@@ -88,7 +88,7 @@ io.on("connection", (socket) => {
     socket.on("end-call", ({ to }) => {
         const receiverSocketIds = getReceiverSocketIds(to);
         receiverSocketIds.forEach(socketId => {
-            io.to(receiverSocketId).emit("call-ended");
+            io.to(socketId).emit("call-ended");
         });
     });
 
@@ -102,7 +102,7 @@ io.on("connection", (socket) => {
     socket.on("call-busy", ({ to }) => {
         const callerSocketIds = getReceiverSocketIds(to);
         callerSocketIds.forEach(socketId => {
-            io.to(callerSocketId).emit("call-busy");
+            io.to(socketId).emit("call-busy");
         });
     });
 });
